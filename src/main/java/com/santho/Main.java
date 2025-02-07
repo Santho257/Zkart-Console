@@ -1,23 +1,20 @@
 package com.santho;
 
-import com.santho.repos.ProductRepository;
-import com.santho.repos.ProductRepositoryImpl;
+import com.santho.services.MenuService;
 
 import java.io.IOException;
 
 public class Main {
-    private static final ProductRepository productRepository;
-
-    static {
-        try {
-            productRepository = ProductRepositoryImpl.getInstance();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public static void main(String[] args){
+        System.out.println("***Welcome to Z-cart - Ecommerce for Gadgets***");
+        int result;
+        try{
+            do{
+                result = MenuService.authMenu();
+            }while(result != 1);
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        System.out.println("***Welcome to Z-cart - Ecommerce for All***");
-        System.out.println(productRepository.getProducts());
+        catch (IOException exception){
+            System.out.println(exception.getMessage());
+        }
     }
 }
