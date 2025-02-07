@@ -1,23 +1,23 @@
 package com.santho;
 
-import com.santho.repos.UserRepository;
-import com.santho.repos.UserRepositoryImpl;
+import com.santho.repos.ProductRepository;
+import com.santho.repos.ProductRepositoryImpl;
 
 import java.io.IOException;
 
 public class Main {
-    private static final UserRepository userRepository;
+    private static final ProductRepository productRepository;
 
     static {
         try {
-            userRepository = UserRepositoryImpl.getInstance();
+            productRepository = ProductRepositoryImpl.getInstance();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         System.out.println("***Welcome to Z-cart - Ecommerce for All***");
-        System.out.println(userRepository.getUsers());
+        System.out.println(productRepository.getProducts());
     }
 }
