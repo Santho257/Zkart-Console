@@ -8,11 +8,12 @@ enum Category{
 }
 
 message Product{
-    required Category category = 1;
-    required string product = 2;
+    required string id = 1;
+    required Category category = 2;
     required string brand = 3;
-    required double price = 4;
-    optional int32 stock = 5 [default = 0];
+    required string model = 4;
+    required double price = 5;
+    optional int32 stock = 6 [default = 0];
 }
 
 message AllProducts{
