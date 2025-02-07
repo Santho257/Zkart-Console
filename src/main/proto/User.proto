@@ -1,0 +1,15 @@
+package proto;
+
+option java_package = "com.santho.proto";
+option java_outer_classname = "ZUser";
+
+message User{
+    required string email = 1;
+    required string password = 2;
+    required string name = 3;
+    required string mobile = 4;
+}
+
+message ZUsers{
+    repeated User users = 1;
+}
