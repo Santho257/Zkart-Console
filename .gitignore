@@ -38,4 +38,5 @@ build/
 .DS_Store
 
 ###  Proto Generated Files ###
-./src/main/java/com/santho/proto
+/src/main/java/com/santho/proto/
+**.protobuf
