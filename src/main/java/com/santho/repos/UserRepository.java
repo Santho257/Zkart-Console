@@ -8,4 +8,9 @@ import java.util.List;
 
 public interface UserRepository {
     List<ZUser.User> getUsers() throws IOException;
+    boolean alreadyExists(String email) throws IOException;
+    ZUser.User getByEmail(String email) throws IOException;
+
+    void addUser(ZUser.User user) throws IOException;
+
 }
