@@ -3,6 +3,8 @@ package com.santho.services;
 import com.santho.helpers.InputHelper;
 import com.santho.helpers.SingletonScanner;
 import com.santho.proto.ZUser;
+import com.santho.repos.AdminRepository;
+import com.santho.repos.AdminRepositoryImpl;
 import com.santho.repos.UserRepository;
 import com.santho.repos.UserRepositoryImpl;
 import com.santho.services.user.UserService;
@@ -16,6 +18,7 @@ public class AuthenticationService {
     private static AuthenticationService instance;
     private final Scanner in;
     private final UserRepository userRepository;
+    private final AdminRepository adminRepository;
     private final UserService userService;
     private String loggedIn;
     private boolean admin = false;
@@ -24,6 +27,7 @@ public class AuthenticationService {
         this.in = SingletonScanner.getInstance();
         userRepository = UserRepositoryImpl.getInstance();
         userService = UserServiceImpl.getInstance();
+        adminRepository = AdminRepositoryImpl.getInstance();
     }
 
     public static AuthenticationService getInstance() throws IOException {
@@ -108,12 +112,35 @@ public class AuthenticationService {
         }
     }
 
+    public void logout() {
+        this.loggedIn = null;
+        if (admin) admin = false;
+    }
+
+    public boolean adminLogin() throws IOException {
+        System.out.println("Enter -1 to Go back");
+        String email;
+        do{
+            email = InputHelper.getInput("Enter email: ");
+            if(email.equals("admin@zoho.com"))  break;
+            System.out.println("Invalid Admin Email!!");
+        }while (true);
+        do{
+            String password = InputHelper.getInput("Enter Password: ");
+            if(PasswordEncoderService.match(password, adminRepository.getAdmin().getPassword())){
+                loggedIn = email;
+                admin = true;
+                return true;
+            }
+            System.out.println("Incorrect Password!");
+        }while (true);
+    }
+
     public String getLoggedIn() {
         return loggedIn;
     }
 
-    public void logout() {
-        this.loggedIn = null;
-        if (admin) admin = false;
+    public boolean isAdmin() {
+        return admin;
     }
 }
