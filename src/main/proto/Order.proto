@@ -1,0 +1,20 @@
+option java_package = "com.santho.proto";
+option java_outer_classname = "Order";
+
+message ProductDetail{
+    required string prodId = 1;
+    required int32 quantity = 2;
+}
+
+message OrderDetail {
+    required string invoiceNumber = 1;
+    repeated ProductDetail product_details = 2;
+    required double price = 3;
+    required string orderBy = 4;
+    required string orderAt = 5;
+    optional bool couponApplied = 6 [default = false];
+}
+
+message AllOrders {
+    repeated OrderDetail orders = 1;
+}
