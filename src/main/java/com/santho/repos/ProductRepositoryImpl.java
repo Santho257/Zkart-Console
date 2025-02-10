@@ -1,10 +1,12 @@
 package com.santho.repos;
 
+import com.santho.Main;
 import com.santho.proto.ZProduct;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProductRepositoryImpl implements ProductRepository{
     private static int count = 1;
@@ -32,6 +34,29 @@ public class ProductRepositoryImpl implements ProductRepository{
         }
     }
 
+    @Override
+    public List<ZProduct.Product> getProductsByCategory(ZProduct.Category category) throws IOException {
+        try(FileInputStream prodIS = new FileInputStream(productFile)){
+            return ZProduct.AllProducts.parseFrom(prodIS)
+                    .getProductsList().stream().filter(product -> product.getCategory().equals(category))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
+    public void updateStock(String prodId, int quantity) throws IOException {
+        try(FileInputStream prodIS = new FileInputStream(productFile)){
+            List<ZProduct.Product> allProducts = ZProduct.AllProducts.parseFrom(prodIS)
+                    .getProductsList().stream()
+                    .map(product -> {
+                        if(!product.getId().equalsIgnoreCase(prodId))
+                            return product;
+                        return product.toBuilder().setStock(quantity).build();
+                    })
+                    .collect(Collectors.toList());
+        }
+    }
+
     private void readFromInitial() throws IOException {
         StringBuilder sb = new StringBuilder();
         try(FileInputStream prodIS = new FileInputStream("src/main/resources/z-kart_db.txt")){
@@ -43,7 +68,9 @@ public class ProductRepositoryImpl implements ProductRepository{
         for (int i = 1; i < prodArr.length; i++) {
             String[] prodDet = prodArr[i].split(" ");
             ZProduct.Product prod = ZProduct.Product.newBuilder()
-                    .setId(count + prodDet[1] + prodDet[2])
+                    .setId((count +
+                            prodDet[1].substring(0, Math.min(prodDet[1].length(), 3)) +
+                            prodDet[2].substring(0, Math.min(prodDet[2].length(), 3))).toUpperCase())
                     .setCategory(ZProduct.Category.valueOf(prodDet[0].toUpperCase()))
                     .setBrand(prodDet[1])
                     .setModel(prodDet[2])
@@ -58,4 +85,5 @@ public class ProductRepositoryImpl implements ProductRepository{
             prods.writeTo(prodOS);
         }
     }
+
 }
