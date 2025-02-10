@@ -1,19 +1,21 @@
+syntax = "proto3";
+
 option java_package = "com.santho.proto";
 option java_outer_classname = "ZProduct";
 
 enum Category{
-    LAPTOP = 1;
-    MOBILE = 2;
-    TABLET = 3;
+    LAPTOP = 0;
+    MOBILE = 1;
+    TABLET = 2;
 }
 
 message Product{
-    required string id = 1;
-    required Category category = 2;
-    required string brand = 3;
-    required string model = 4;
-    required double price = 5;
-    optional int32 stock = 6 [default = 0];
+    string id = 1;
+    Category category = 2;
+    string brand = 3;
+    string model = 4;
+    double price = 5;
+    optional int32 stock = 6;
 }
 
 message AllProducts{

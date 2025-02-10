@@ -1,7 +1,9 @@
+syntax = "proto3";
+
 option java_package = "com.santho.proto";
 option java_outer_classname = "ZAdmin";
 
 message Admin{
-    required string email = 1;
-    required string password = 2;
+    string email = 1;
+    string password = 2;
 }
