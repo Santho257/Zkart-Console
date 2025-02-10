@@ -50,7 +50,8 @@ public class MenuService {
                     if (authService.login()) return 1;
                     return authMenu();
                 case 3:
-                    System.out.println("Admin Login Needs to be implemented");
+                    if (authService.adminLogin()) return 1;
+                    return authMenu();
                 case 0:
                     System.out.println("Thank You");
                     return -1;
@@ -65,12 +66,56 @@ public class MenuService {
     }
 
     public static int mainMenu() throws IOException {
-        Map<ZProduct.Product, Integer> cart = new HashMap<>();
-        int res = buyProducts(cart);
-        if (res < 0) return res;
-        Order.OrderDetail thisOrder = orderService.checkout(cart);
-        orderService.showOrder(thisOrder);
+        if (authService.isAdmin()) {
+            int res = adminMenu();
+            if (res < 0) return res;
+        } else {
+            Map<ZProduct.Product, Integer> cart = new HashMap<>();
+            int res = buyProducts(cart);
+            if (res < 0) return res;
+            Order.OrderDetail thisOrder = orderService.checkout(cart);
+            orderService.showOrder(thisOrder);
+        }
+
         return mainMenu();
+    }
+
+    private static int adminMenu() throws IOException {
+        int choice;
+        do {
+            System.out.println("Enter:\n1. Restock\n2. Logout\n0. Exit");
+            try {
+                choice = Integer.parseInt(in.nextLine());
+                break;
+            }
+            catch (NumberFormatException ex){
+                System.out.println("Enter Valid Number!");
+            }
+        }while (true);
+        switch (choice){
+            case 1:
+                restock();
+                break;
+            case 2:
+                authService.logout();
+                return -2;
+            case 0:
+                return -1;
+            default:
+                System.out.println("Invalid Option");
+                return adminMenu();
+        }
+        return 0;
+    }
+
+    private static int restock() throws IOException {
+        System.out.println("***Enter -1 to exit at any time***");
+        prodService.showLessThan(20);
+        String prodId = InputHelper.getInput("Enter ID to restock");
+        ZProduct.Product product = prodService.getProductById(prodId);
+        int additionalQuantity = Integer.parseInt(InputHelper.getInput("Enter updated Quantity"));
+        prodService.reOrder(prodId, product.getStock() + additionalQuantity);
+        return 1;
     }
 
     private static int buyProducts(Map<ZProduct.Product, Integer> cart) throws IOException {
@@ -114,19 +159,18 @@ public class MenuService {
             String prodId = InputHelper.getInput("Enter Product Id: ").trim().toUpperCase();
             ZProduct.Product prod = prodService.existsInCategory(prodId, category);
             int quantity;
-            do{
-                try{
+            do {
+                try {
                     quantity = Integer.parseInt(InputHelper.getInput("Enter Quantity: "));
                     break;
-                }
-                catch (NumberFormatException ex){
+                } catch (NumberFormatException ex) {
                     System.out.println("Enter Valid Numerical!!");
                 }
-            }while (true);
+            } while (true);
             cart.put(prod, cart.getOrDefault(prod, 0) + quantity);
             System.out.print("Continue Buying?(yes)");
             String conti = in.nextLine();
-            if(conti.equalsIgnoreCase("yes"))   return buyProducts(cart);
+            if (conti.equalsIgnoreCase("yes")) return buyProducts(cart);
             return 1;
         } catch (IllegalArgumentException | IllegalStateException ex) {
             System.out.println(ex.getMessage());
