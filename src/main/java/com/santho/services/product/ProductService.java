@@ -14,4 +14,6 @@ public interface ProductService {
     ZProduct.Product getProductById(String prod) throws IOException;
 
     void reOrder(String prodId, int quantity) throws IOException;
+
+    void showLessThan(int treshold) throws IOException;
 }

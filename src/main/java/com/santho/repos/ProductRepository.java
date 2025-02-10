@@ -12,4 +12,6 @@ public interface ProductRepository {
     List<ZProduct.Product> getProductsByCategory(ZProduct.Category category) throws IOException;
 
     void updateStock(String prodId, int quantity) throws IOException;
+
+    List<ZProduct.Product> productsLessThan(int treshold) throws IOException;
 }

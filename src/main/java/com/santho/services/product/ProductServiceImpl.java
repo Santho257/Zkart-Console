@@ -58,4 +58,20 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("Quantity Cannot be less than zero");
         productRepository.updateStock(prodId, quantity);
     }
+
+    @Override
+    public void showLessThan(int treshold) throws IOException {
+        List<ZProduct.Product> products = productRepository.productsLessThan(treshold);
+        if(products.size() <= 0){
+            System.out.println("Everything is above treshold!");
+            return;
+        }
+        System.out.println("ID " + "BRAND " + "MODEL " + "PRICE " + "STOCK");
+        for(ZProduct.Product product : products){
+            System.out.print(product.getId() + " " + product.getBrand() + " ");
+            System.out.print(product.getModel() + " " + product.getPrice() + " ");
+            int stock = product.getStock();
+            System.out.println((stock > 0) ? stock : "Currently Unavailable");
+        }
+    }
 }

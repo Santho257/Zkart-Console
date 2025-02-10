@@ -1,6 +1,5 @@
 package com.santho.repos;
 
-import com.santho.Main;
 import com.santho.proto.ZProduct;
 
 import java.io.*;
@@ -46,13 +45,28 @@ public class ProductRepositoryImpl implements ProductRepository{
     @Override
     public void updateStock(String prodId, int quantity) throws IOException {
         try(FileInputStream prodIS = new FileInputStream(productFile)){
-            List<ZProduct.Product> allProducts = ZProduct.AllProducts.parseFrom(prodIS)
+            List<ZProduct.Product> updated = ZProduct.AllProducts.parseFrom(prodIS)
                     .getProductsList().stream()
                     .map(product -> {
                         if(!product.getId().equalsIgnoreCase(prodId))
                             return product;
                         return product.toBuilder().setStock(quantity).build();
                     })
+                    .collect(Collectors.toList());
+            try(FileOutputStream prodOS = new FileOutputStream(productFile)){
+                ZProduct.AllProducts allProducts = ZProduct.AllProducts.newBuilder()
+                        .addAllProducts(updated).build();
+                allProducts.writeTo(prodOS);
+            }
+        }
+    }
+
+    @Override
+    public List<ZProduct.Product> productsLessThan(int treshold) throws IOException{
+        try (FileInputStream prodIS = new FileInputStream(productFile)){
+            return ZProduct.AllProducts.parseFrom(prodIS)
+                    .getProductsList().stream()
+                    .filter(prod -> prod.getStock() < treshold)
                     .collect(Collectors.toList());
         }
     }
