@@ -4,6 +4,8 @@ import com.santho.helpers.InputHelper;
 import com.santho.helpers.SingletonScanner;
 import com.santho.proto.Order;
 import com.santho.proto.ZProduct;
+import com.santho.services.discount.DiscountService;
+import com.santho.services.discount.DiscountServiceImpl;
 import com.santho.services.order.OrderService;
 import com.santho.services.order.OrderServiceImpl;
 import com.santho.services.product.ProductService;
@@ -18,6 +20,7 @@ public class MenuService {
     private static final AuthenticationService authService;
     private static final ProductService prodService;
     private static final OrderService orderService;
+    private static final DiscountService discountService;
     private static final Scanner in = SingletonScanner.getInstance();
 
     static {
@@ -25,6 +28,7 @@ public class MenuService {
             authService = AuthenticationService.getInstance();
             prodService = ProductServiceImpl.getInstance();
             orderService = OrderServiceImpl.getInstance();
+            discountService = DiscountServiceImpl.getInstance();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -73,7 +77,31 @@ public class MenuService {
             Map<ZProduct.Product, Integer> cart = new HashMap<>();
             int res = buyProducts(cart);
             if (res < 0) return res;
-            Order.OrderDetail thisOrder = orderService.checkout(cart);
+            String code = "";
+            String logged = authService.getLoggedIn();
+            if(discountService.hasCoupon(logged)) {
+                System.out.print("Want to add Discount Code?(yes) ");
+                String coup = in.nextLine();
+                boolean valid = false;
+                if(coup.equalsIgnoreCase("yes")){
+                    discountService.showUserCoupon(logged, orderService.getOrderCount(logged));
+                    System.out.println("Enter -1 to optOut");
+                    do{
+                        code = InputHelper.getInput("Enter Code: ");
+                        try{
+                            valid = discountService.isValid(code, orderService.getOrderCount(authService.getLoggedIn()));
+                            break;
+                        }
+                        catch (IllegalArgumentException | IllegalStateException ex){
+                            System.out.println(ex.getMessage());
+                        }
+                    }while (!valid);
+                    System.out.println("Valid" + valid);
+                    if(!valid)
+                        code = "";
+                }
+            }
+            Order.OrderDetail thisOrder = orderService.checkout(cart, code);
             orderService.showOrder(thisOrder);
         }
 

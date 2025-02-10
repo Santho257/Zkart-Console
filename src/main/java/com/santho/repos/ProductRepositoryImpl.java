@@ -45,6 +45,7 @@ public class ProductRepositoryImpl implements ProductRepository{
     @Override
     public void updateStock(String prodId, int quantity) throws IOException {
         try(FileInputStream prodIS = new FileInputStream(productFile)){
+
             List<ZProduct.Product> updated = ZProduct.AllProducts.parseFrom(prodIS)
                     .getProductsList().stream()
                     .map(product -> {
