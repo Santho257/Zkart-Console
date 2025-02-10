@@ -18,6 +18,7 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final UserService userService;
     private String loggedIn;
+    private boolean admin = false;
 
     private AuthenticationService() throws IOException {
         this.in = SingletonScanner.getInstance();
@@ -109,5 +110,10 @@ public class AuthenticationService {
 
     public String getLoggedIn() {
         return loggedIn;
+    }
+
+    public void logout() {
+        this.loggedIn = null;
+        if (admin) admin = false;
     }
 }
