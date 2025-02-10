@@ -5,15 +5,15 @@ import com.santho.services.MenuService;
 import java.io.IOException;
 
 public class Main {
-    public static void main(String[] args){
+    public static void main(String[] args) {
         System.out.println("***Welcome to Z-cart - Ecommerce for Gadgets***");
         int result;
-        try{
-            do{
-                result = MenuService.authMenu();
-            }while(result != 1);
-        }
-        catch (IOException exception){
+        try {
+            result = MenuService.authMenu();
+            if (result == -1) return;
+            result = MenuService.mainMenu();
+            if(result == -2)    main(args);
+        } catch (IOException exception) {
             System.out.println(exception.getMessage());
         }
     }
