@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option java_package = "com.santho.proto";
+option java_outer_classname = "ZDiscount";
+
+message Discount{
+    string code = 1;
+    string belongsTo = 2;
+    int32 orderNumber = 3;
+    optional bool used = 4;
+}
+
+message AllDiscounts {
+    repeated Discount discounts = 1;
+}
