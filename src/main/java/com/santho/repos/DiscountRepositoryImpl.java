@@ -54,16 +54,21 @@ public class DiscountRepositoryImpl implements DiscountRepository{
 
     @Override
     public void useCode(String code) throws IOException {
+        ZDiscount.Discount discount;
+        int remIndex;
         try (FileInputStream discountIS = new FileInputStream(discountFile)) {
             List<ZDiscount.Discount> allDiscounts = ZDiscount.AllDiscounts.parseFrom(discountIS).getDiscountsList();
-            ZDiscount.Discount discount = allDiscounts
+            discount = allDiscounts
                     .stream()
                     .filter(dis -> dis.getCode().equalsIgnoreCase(code))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Code not found"));
-            int remIndex = allDiscounts.indexOf(discount);
+            remIndex = allDiscounts.indexOf(discount);
+        }
+        try (FileInputStream discountIS = new FileInputStream(discountFile)) {
             ZDiscount.AllDiscounts discounts = ZDiscount.AllDiscounts.parseFrom(discountIS)
-                    .toBuilder().setDiscounts(remIndex, discount.toBuilder().setUsed(false).build())
+                    .toBuilder()
+                    .setDiscounts(remIndex, discount.toBuilder().setUsed(true).build())
                     .build();
             try(FileOutputStream discountOS = new FileOutputStream(discountFile)){
                 discounts.writeTo(discountOS);

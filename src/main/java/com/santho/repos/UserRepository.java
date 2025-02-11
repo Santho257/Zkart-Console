@@ -13,4 +13,5 @@ public interface UserRepository {
 
     void addUser(ZUser.User user) throws IOException;
 
+    void changePassword(String email, String password) throws IOException;
 }

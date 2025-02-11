@@ -10,7 +10,7 @@ public class Main {
         int result;
         try {
             result = MenuService.authMenu();
-            if (result == -1) return;
+            if (result == -1)   return;
             result = MenuService.mainMenu();
             if(result == -2)    main(args);
         } catch (IOException exception) {

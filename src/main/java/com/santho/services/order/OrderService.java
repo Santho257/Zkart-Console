@@ -12,4 +12,6 @@ public interface OrderService {
     Order.OrderDetail checkout(Map<ZProduct.Product, Integer> cart, String code) throws IOException;
 
     void showOrder(Order.OrderDetail thisOrder) throws IOException;
+
+    void showAllOrder(String email) throws IOException;
 }

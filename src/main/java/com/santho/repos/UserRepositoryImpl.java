@@ -3,8 +3,10 @@ package com.santho.repos;
 import com.santho.proto.ZUser;
 
 import java.io.*;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 public class UserRepositoryImpl implements UserRepository{
     private static UserRepositoryImpl instance;
@@ -41,6 +43,7 @@ public class UserRepositoryImpl implements UserRepository{
                     .newBuilder()
                     .setEmail(userDet[0])
                     .setPassword(userDet[1])
+                    .addAllOldPasswords(List.of(new String[]{userDet[1]}))
                     .setName(userDet[2])
                     .setMobile(userDet[3])
                     .build();
@@ -93,6 +96,37 @@ public class UserRepositoryImpl implements UserRepository{
             ZUser.ZUsers users = ZUser.ZUsers.newBuilder()
                     .mergeFrom(userIS).addUsers(user).build();
             try(FileOutputStream userOS = new FileOutputStream(userFile)) {
+                users.writeTo(userOS);
+            }
+        }
+    }
+
+    @Override
+    public void changePassword(String email, String password) throws IOException {
+        ZUser.User user = getByEmail(email);
+        List<ZUser.User> allUsers = getUsers();
+        int changeIndex = allUsers.indexOf(user);
+        try(FileInputStream userIS = new FileInputStream(userFile)) {
+            Queue<String> oldPasswords = new ArrayDeque<>(user.toBuilder().getOldPasswordsList());
+            for(String oldPass: oldPasswords){
+                if(password.equals(oldPass)){
+                    throw new IllegalArgumentException("Your new password cannot be equal to your last 3 passwords");
+                }
+            }
+            if(oldPasswords.size() < 3) oldPasswords.offer(password);
+            else{
+                oldPasswords.poll();
+                oldPasswords.offer(password);
+            }
+            ZUser.ZUsers users = ZUser.ZUsers.parseFrom(userIS).toBuilder()
+                    .setUsers(changeIndex, user
+                            .toBuilder()
+                            .setPassword(password)
+                            .clearOldPasswords()
+                            .addAllOldPasswords(oldPasswords)
+                            .build())
+                    .build();
+            try (FileOutputStream userOS = new FileOutputStream(userFile)){
                 users.writeTo(userOS);
             }
         }

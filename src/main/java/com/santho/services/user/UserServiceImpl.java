@@ -5,6 +5,7 @@ import com.santho.repos.UserRepository;
 import com.santho.repos.UserRepositoryImpl;
 
 import java.io.IOException;
+import java.util.List;
 
 public class UserServiceImpl implements UserService{
     private static UserServiceImpl instance;
@@ -24,5 +25,15 @@ public class UserServiceImpl implements UserService{
     @Override
     public void addUser(ZUser.User user) throws IOException {
         userRepository.addUser(user);
+    }
+
+    @Override
+    public ZUser.User getUserById(String email) throws IOException {
+        return userRepository.getByEmail(email);
+    }
+
+    @Override
+    public void changePassword(String email, String encoded) throws IOException {
+        userRepository.changePassword(email, encoded);
     }
 }

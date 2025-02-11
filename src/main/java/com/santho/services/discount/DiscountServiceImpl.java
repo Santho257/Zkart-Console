@@ -63,6 +63,6 @@ public class DiscountServiceImpl implements DiscountService {
 
     @Override
     public void useDiscount(String code) throws IOException{
-
+        discountRepository.useCode(code);
     }
 }

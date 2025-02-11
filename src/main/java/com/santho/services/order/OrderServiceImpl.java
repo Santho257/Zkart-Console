@@ -44,7 +44,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order.OrderDetail checkout(Map<ZProduct.Product, Integer> cart, String code) throws IOException {
-        System.out.println("Used Code "+ code);
         for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
             if (entry.getKey().getStock() < entry.getValue())
                 throw new IllegalStateException("Sorry!! " + entry.getKey().getId() + " doesn't has " + entry.getValue() + " Stocks");
@@ -85,7 +84,6 @@ public class OrderServiceImpl implements OrderService {
                 .setDiscount(code)
                 .setOrderAt(String.format("%2d-%2d-%4d", today.getDate() + 1, today.getMonth() + 1, 1900 + today.getYear()))
                 .build();
-
         return orderRepository.addOrder(newOrder);
     }
 
@@ -106,5 +104,17 @@ public class OrderServiceImpl implements OrderService {
         }
         System.out.printf("Billable - %.2f\n", order.getPrice());
         System.out.println();
+    }
+
+    @Override
+    public void showAllOrder(String email) throws IOException {
+        List<Order.OrderDetail> allOrders = orderRepository.getOrdersByUser(email);
+        if(allOrders.isEmpty()){
+            System.out.println("You Haven't made any orders yet!");
+            return;
+        }
+        for (Order.OrderDetail order : allOrders){
+            showOrder(order);
+        }
     }
 }
