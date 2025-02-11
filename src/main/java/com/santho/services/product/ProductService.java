@@ -9,6 +9,8 @@ import java.util.Map;
 public interface ProductService {
     void displayProductsByCategory(ZProduct.Category category) throws IOException;
 
+    void displayProducts() throws IOException;
+
     ZProduct.Product existsInCategory(String prodId, ZProduct.Category category) throws IOException;
 
     ZProduct.Product getProductById(String prod) throws IOException;
@@ -16,4 +18,8 @@ public interface ProductService {
     void reOrder(String prodId, int quantity) throws IOException;
 
     void showLessThan(int treshold) throws IOException;
+
+    String getDealOfTheMoment();
+
+    void setDeal() throws IOException;
 }

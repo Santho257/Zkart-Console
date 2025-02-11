@@ -11,8 +11,7 @@ message ProductDetail{
 message OrderDetail {
     string invoiceNumber = 1;
     repeated ProductDetail product_details = 2;
-    double total = 7;
-    double saved = 8;
+    double saved = 7;
     double price = 3;
     string orderBy = 4;
     string orderAt = 5;

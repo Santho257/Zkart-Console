@@ -12,10 +12,23 @@ public class ProductRepositoryImpl implements ProductRepository{
     private static ProductRepositoryImpl instance;
     private final File productFile;
 
+    private String dealOfTheMoment;
+
     private ProductRepositoryImpl() throws IOException {
         this.productFile = new File("public/db/zproducts_db.protobuf");
         if(!this.productFile.exists()){
             readFromInitial();
+        }
+        dealOfTheMoment = findDeal();
+    }
+
+    private String findDeal() throws IOException {
+        try(FileInputStream discountIS = new FileInputStream(productFile)){
+            ZProduct.Product dealProd = ZProduct.AllProducts.parseFrom(discountIS).getProductsList()
+                    .stream()
+                    .reduce((res, prod) -> (res.getStock() < prod.getStock()) ? prod : res)
+                    .orElseThrow(() -> new IllegalStateException("No product for deal available"));
+            return dealProd.getId();
         }
     }
 
@@ -100,4 +113,13 @@ public class ProductRepositoryImpl implements ProductRepository{
         }
     }
 
+    @Override
+    public String getDealOfTheMoment() {
+        return dealOfTheMoment;
+    }
+
+    @Override
+    public void setDealOfTheMoment() throws IOException {
+        this.dealOfTheMoment = findDeal();
+    }
 }

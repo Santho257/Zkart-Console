@@ -29,10 +29,26 @@ public class ProductServiceImpl implements ProductService {
         System.out.println("*** " + category + " Products ***");
         System.out.println("ID " + "BRAND " + "MODEL " + "PRICE " + "STOCK");
         for(ZProduct.Product product : products){
-            System.out.print(product.getId() + " " + product.getBrand() + " ");
-            System.out.print(product.getModel() + " " + product.getPrice() + " ");
-            int stock = product.getStock();
-            System.out.println((stock > 0) ? stock : "Currently Unavailable");
+            System.out.printf("%s %s %s ", product.getId(), product.getBrand(), product.getModel());
+            double price = product.getPrice();
+            if(product.getId().equals(productRepository.getDealOfTheMoment())){
+                price -= (price * 0.1);
+            }
+            System.out.printf("%.2f %d\n", price, product.getStock());
+        }
+    }
+
+    @Override
+    public void displayProducts() throws IOException{
+        List<ZProduct.Product> allProducts = productRepository.getProducts();
+        System.out.println("ID " + "CATEGORY" +"BRAND " + "MODEL " + "PRICE " + "STOCK");
+        for(ZProduct.Product product:allProducts){
+            System.out.printf("%s %s %s %s ", product.getId(), product.getCategory(), product.getBrand(), product.getModel());
+            double price = product.getPrice();
+            if(product.getId().equals(productRepository.getDealOfTheMoment())){
+                price -= (price * 0.1);
+            }
+            System.out.printf("%.2f %d\n", price, product.getStock());
         }
     }
 
@@ -66,12 +82,22 @@ public class ProductServiceImpl implements ProductService {
             System.out.println("Everything is above treshold!");
             return;
         }
-        System.out.println("ID " + "BRAND " + "MODEL " + "PRICE " + "STOCK");
+        System.out.println("ID " + "CATEGORY" +"BRAND " + "MODEL " + "PRICE " + "STOCK");
         for(ZProduct.Product product : products){
-            System.out.print(product.getId() + " " + product.getBrand() + " ");
+            System.out.print(product.getId() + " " + product.getCategory() + " " + product.getBrand() + " ");
             System.out.print(product.getModel() + " " + product.getPrice() + " ");
             int stock = product.getStock();
             System.out.println((stock > 0) ? stock : "Currently Unavailable");
         }
+    }
+
+    @Override
+    public String getDealOfTheMoment(){
+        return productRepository.getDealOfTheMoment();
+    }
+
+    @Override
+    public void setDeal() throws IOException {
+        productRepository.setDealOfTheMoment();
     }
 }

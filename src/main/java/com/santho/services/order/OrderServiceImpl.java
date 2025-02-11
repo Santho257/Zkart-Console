@@ -53,22 +53,22 @@ public class OrderServiceImpl implements OrderService {
                 today.getYear(), today.getMonth(),
                 authService.getLoggedIn().split("@")[0], getOrderCount(authService.getLoggedIn()) + 1);
         invoiceNumber = invoiceNumber.replaceAll(" ", "0");
-        double price = 0;
+        double price = 0, discountPrice = 0;
         List<Order.ProductDetail> products = new ArrayList<>();
+        String dealOfTheMoment = productService.getDealOfTheMoment();
         for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
             ZProduct.Product product = entry.getKey();
             int quantity = entry.getValue();
             products.add(Order.ProductDetail.newBuilder()
                     .setProdId(product.getId())
                     .setQuantity(quantity).build());
+            if(product.getId().equals(dealOfTheMoment)) discountPrice += (product.getPrice() * 0.1 * quantity);
             price += (product.getPrice() * quantity);
-            productService.reOrder(product.getId(), product.getStock() - quantity);
         }
         String loggedIn = authService.getLoggedIn();
-        double discountPrice = 0;
         if (!code.isEmpty()) {
             discountService.useDiscount(code);
-            discountPrice = (price * (Math.random() * 10 + 20) / 100);
+            discountPrice += (price * (Math.random() * 10 + 20) / 100);
         }
         if (getOrderCount(loggedIn) == 2 || price >= 20000) {
             String discountCode = discountService.generateCoupon(getOrderCount(loggedIn));
@@ -76,7 +76,6 @@ public class OrderServiceImpl implements OrderService {
         }
         Order.OrderDetail newOrder = Order.OrderDetail.newBuilder()
                 .setInvoiceNumber(invoiceNumber)
-                .setTotal(price)
                 .setSaved(discountPrice)
                 .setPrice(price - discountPrice)
                 .setOrderBy(loggedIn)
@@ -84,6 +83,10 @@ public class OrderServiceImpl implements OrderService {
                 .setDiscount(code)
                 .setOrderAt(String.format("%2d-%2d-%4d", today.getDate() + 1, today.getMonth() + 1, 1900 + today.getYear()))
                 .build();
+        for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
+            productService.reOrder(entry.getKey().getId(), entry.getKey().getStock() - entry.getValue());
+        }
+        productService.setDeal();
         return orderRepository.addOrder(newOrder);
     }
 
@@ -92,14 +95,16 @@ public class OrderServiceImpl implements OrderService {
         System.out.println();
         System.out.println("Invoice Number: " + order.getInvoiceNumber());
         System.out.println("Date: " + order.getOrderAt());
-        System.out.println("Category Brand Model Price");
+        System.out.println("Category Brand Model Price Quantity");
         List<Order.ProductDetail> products = order.getProductDetailsList();
         for (Order.ProductDetail prod : products) {
             ZProduct.Product product = productService.getProductById(prod.getProdId());
             System.out.printf("%s %s %s %.2f %d%n", product.getCategory(), product.getBrand(), product.getModel(), product.getPrice(), prod.getQuantity());
         }
-        System.out.printf("Total: %.2f\n", order.getTotal());
-        if(!order.getDiscount().isEmpty()){
+        System.out.printf("Total: %.2f\n", order.getPrice() + order.getSaved());
+        if(order.getSaved() > 0){
+            if(!order.getDiscount().isEmpty())
+                System.out.println("Used Code : " + order.getDiscount());
             System.out.printf("Saved Discount : %.2f\n", order.getSaved());
         }
         System.out.printf("Billable - %.2f\n", order.getPrice());
