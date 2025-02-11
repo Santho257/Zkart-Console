@@ -1,5 +1,6 @@
 package com.santho.services;
 
+import com.santho.helpers.DesignHelper;
 import com.santho.helpers.InputHelper;
 import com.santho.helpers.SingletonScanner;
 import com.santho.proto.ZAdmin;
@@ -39,7 +40,7 @@ public class AuthenticationService {
     }
 
     public boolean signup() throws IOException {
-        System.out.println("!!**Enter -1 to cancel at any point**!!");
+        System.out.println(DesignHelper.printDesign(50, '*', "Enter -1 to cancel"));
         String email;
         do {
             email = InputHelper.getInput("Enter Email: ").toLowerCase();
@@ -47,7 +48,7 @@ public class AuthenticationService {
             else System.out.println("Not an Valid email!!");
         } while (true);
         if (userRepository.alreadyExists(email)) {
-            System.out.println("User Already Exist! -> Moves to Sign-in");
+            System.out.println(DesignHelper.printDesign(50, '#', "User Already Exist! -> Moves to Sign-in"));
             return this.login(email);
         }
         return signup(email);
@@ -97,12 +98,12 @@ public class AuthenticationService {
     }
 
     public boolean login() throws IOException {
-        System.out.println("!!**Enter -1 to cancel at any point**!!");
+        System.out.println(DesignHelper.printDesign(50, '*', "Enter -1 to cancel"));
         String email = InputHelper.getInput("Enter Email: ").toLowerCase();
         if(userRepository.alreadyExists(email))
             return this.login(email);
         else {
-            System.out.println("User Doesn't Exists\n Creating new account");
+            System.out.println(DesignHelper.printDesign(50, '#', "User Doesn't Exists\n Creating new account"));
             return this.signup(email);
         }
     }
@@ -125,7 +126,7 @@ public class AuthenticationService {
     }
 
     public boolean adminLogin() throws IOException {
-        System.out.println("Enter -1 to Go back");
+        System.out.println(DesignHelper.printDesign(50, '*', "Enter -1 to cancel"));
         String email;
         do{
             email = InputHelper.getInput("Enter email: ");

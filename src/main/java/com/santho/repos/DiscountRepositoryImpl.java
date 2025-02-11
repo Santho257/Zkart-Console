@@ -85,7 +85,6 @@ public class DiscountRepositoryImpl implements DiscountRepository{
                     .filter(dis -> dis.getCode().equalsIgnoreCase(code))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Code not found"));
-            System.out.println(discount);
             if(!discount.getBelongsTo().equals(authService.getLoggedIn()))
                 throw new IllegalArgumentException("You are not allowed to use this token");
             if(discount.getUsed())

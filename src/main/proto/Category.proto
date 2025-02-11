@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_package = "com.santho.proto";
+option java_outer_classname = "ZCategory";
+
+message Category{
+    string name = 1;
+}
+
+message AllCategories {
+    repeated Category categories = 1;
+}

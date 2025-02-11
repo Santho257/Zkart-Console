@@ -84,7 +84,7 @@ public class OrderServiceImpl implements OrderService {
                 .setOrderAt(String.format("%2d-%2d-%4d", today.getDate() + 1, today.getMonth() + 1, 1900 + today.getYear()))
                 .build();
         for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
-            productService.reOrder(entry.getKey().getId(), entry.getKey().getStock() - entry.getValue());
+            productService.reOrder(entry.getKey(), entry.getKey().getStock() - entry.getValue());
         }
         productService.setDeal();
         return orderRepository.addOrder(newOrder);
@@ -99,7 +99,7 @@ public class OrderServiceImpl implements OrderService {
         List<Order.ProductDetail> products = order.getProductDetailsList();
         for (Order.ProductDetail prod : products) {
             ZProduct.Product product = productService.getProductById(prod.getProdId());
-            System.out.printf("%s %s %s %.2f %d%n", product.getCategory(), product.getBrand(), product.getModel(), product.getPrice(), prod.getQuantity());
+            System.out.printf("%s %s %s %.2f %d%n", product.getCategoryId(), product.getBrand(), product.getModel(), product.getPrice(), prod.getQuantity());
         }
         System.out.printf("Total: %.2f\n", order.getPrice() + order.getSaved());
         if(order.getSaved() > 0){

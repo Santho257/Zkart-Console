@@ -1,23 +1,31 @@
 package com.santho.repos;
 
+import com.santho.proto.ZCategory;
 import com.santho.proto.ZProduct;
+import com.santho.proto.ZUser;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ProductRepositoryImpl implements ProductRepository{
     private static int count = 1;
     private static ProductRepositoryImpl instance;
     private final File productFile;
-
+    private final File categoryFile;
     private String dealOfTheMoment;
 
     private ProductRepositoryImpl() throws IOException {
         this.productFile = new File("public/db/zproducts_db.protobuf");
+        this.categoryFile = new File("public/db/zcategories_db.protobuf");
         if(!this.productFile.exists()){
             readFromInitial();
+        }
+        else {
+            count = getProducts().size() + 1;
         }
         dealOfTheMoment = findDeal();
     }
@@ -47,28 +55,23 @@ public class ProductRepositoryImpl implements ProductRepository{
     }
 
     @Override
-    public List<ZProduct.Product> getProductsByCategory(ZProduct.Category category) throws IOException {
+    public List<ZProduct.Product> getProductsByCategory(String category) throws IOException {
         try(FileInputStream prodIS = new FileInputStream(productFile)){
             return ZProduct.AllProducts.parseFrom(prodIS)
-                    .getProductsList().stream().filter(product -> product.getCategory().equals(category))
+                    .getProductsList().stream()
+                    .filter(product -> product.getCategoryId().equals(category))
                     .collect(Collectors.toList());
         }
     }
 
     @Override
-    public void updateStock(String prodId, int quantity) throws IOException {
+    public void updateStock(ZProduct.Product product, int quantity) throws IOException {
         try(FileInputStream prodIS = new FileInputStream(productFile)){
-            List<ZProduct.Product> updated = ZProduct.AllProducts.parseFrom(prodIS)
-                    .getProductsList().stream()
-                    .map(product -> {
-                        if(!product.getId().equalsIgnoreCase(prodId))
-                            return product;
-                        return product.toBuilder().setStock(quantity).build();
-                    })
-                    .collect(Collectors.toList());
+            List<ZProduct.Product> productList = getProducts();
+            int updateIndex = productList.indexOf(product);
+            ZProduct.AllProducts allProducts = ZProduct.AllProducts.parseFrom(prodIS).toBuilder()
+                    .setProducts(updateIndex, product.toBuilder().setStock(quantity).build()).build();
             try(FileOutputStream prodOS = new FileOutputStream(productFile)){
-                ZProduct.AllProducts allProducts = ZProduct.AllProducts.newBuilder()
-                        .addAllProducts(updated).build();
                 allProducts.writeTo(prodOS);
             }
         }
@@ -86,6 +89,7 @@ public class ProductRepositoryImpl implements ProductRepository{
 
     private void readFromInitial() throws IOException {
         StringBuilder sb = new StringBuilder();
+        Set<ZCategory.Category> cates = new HashSet<>();
         try(FileInputStream prodIS = new FileInputStream("src/main/resources/z-kart_db.txt")){
             int ch;
             while((ch = prodIS.read())!=-1) sb.append((char) ch);
@@ -94,11 +98,12 @@ public class ProductRepositoryImpl implements ProductRepository{
         List<ZProduct.Product> productList = new ArrayList<>();
         for (int i = 1; i < prodArr.length; i++) {
             String[] prodDet = prodArr[i].split(" ");
+            cates.add(ZCategory.Category.newBuilder().setName(prodDet[0].toUpperCase()).build());
             ZProduct.Product prod = ZProduct.Product.newBuilder()
                     .setId((count +
                             prodDet[1].substring(0, Math.min(prodDet[1].length(), 3)) +
                             prodDet[2].substring(0, Math.min(prodDet[2].length(), 3))).toUpperCase())
-                    .setCategory(ZProduct.Category.valueOf(prodDet[0].toUpperCase()))
+                    .setCategoryId(prodDet[0].toUpperCase())
                     .setBrand(prodDet[1])
                     .setModel(prodDet[2])
                     .setPrice(Double.parseDouble(prodDet[3]))
@@ -107,9 +112,13 @@ public class ProductRepositoryImpl implements ProductRepository{
             productList.add(prod);
             count += 1;
         }
+        ZCategory.AllCategories categories = ZCategory.AllCategories.newBuilder().addAllCategories(cates).build();
         ZProduct.AllProducts prods = ZProduct.AllProducts.newBuilder().addAllProducts(productList).build();
         try(FileOutputStream prodOS = new FileOutputStream(this.productFile)){
             prods.writeTo(prodOS);
+        }
+        try(FileOutputStream categoryOS = new FileOutputStream(this.categoryFile)){
+            categories.writeTo(categoryOS);
         }
     }
 
@@ -121,5 +130,42 @@ public class ProductRepositoryImpl implements ProductRepository{
     @Override
     public void setDealOfTheMoment() throws IOException {
         this.dealOfTheMoment = findDeal();
+    }
+
+    @Override
+    public void addProduct(String category, String brand, String model, double price, int stock) throws IOException{
+        try(FileInputStream prodIS = new FileInputStream(productFile)) {
+            String id = count + brand.substring(0,3).toUpperCase() + model.substring(0,3).toUpperCase();
+            ZProduct.Product newProd = ZProduct.Product.newBuilder()
+                    .setId(id)
+                    .setCategoryId(category)
+                    .setBrand(brand)
+                    .setModel(model)
+                    .setPrice(price)
+                    .setStock(stock)
+                    .build();
+            ZProduct.AllProducts products = ZProduct.AllProducts.newBuilder()
+                    .mergeFrom(prodIS).addProducts(newProd).build();
+            try(FileOutputStream userOS = new FileOutputStream(productFile)) {
+                products.writeTo(userOS);
+            }
+        }
+        count++;
+    }
+
+    @Override
+    public void removeProduct(String productId) throws IOException {
+        try(FileInputStream productIS = new FileInputStream(productFile)){
+            ZProduct.AllProducts allProducts = ZProduct.AllProducts.parseFrom(productIS);
+            List<ZProduct.Product> prodList = allProducts.getProductsList();
+            ZProduct.Product product = prodList.stream().filter(prod -> prod.getId().equals(productId))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Product Not found"));
+            int remIndex = prodList.indexOf(product);
+            ZProduct.AllProducts updated = allProducts.toBuilder().removeProducts(remIndex).build();
+            try (FileOutputStream categoryOS = new FileOutputStream(productFile)){
+                updated.writeTo(categoryOS);
+            }
+        }
     }
 }

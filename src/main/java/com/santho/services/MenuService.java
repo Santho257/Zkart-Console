@@ -1,9 +1,12 @@
 package com.santho.services;
 
+import com.santho.helpers.DesignHelper;
 import com.santho.helpers.InputHelper;
 import com.santho.helpers.SingletonScanner;
 import com.santho.proto.Order;
 import com.santho.proto.ZProduct;
+import com.santho.services.category.CategoryService;
+import com.santho.services.category.CategoryServiceImpl;
 import com.santho.services.discount.DiscountService;
 import com.santho.services.discount.DiscountServiceImpl;
 import com.santho.services.order.OrderService;
@@ -19,6 +22,7 @@ import java.util.Scanner;
 public class MenuService {
     private static final AuthenticationService authService;
     private static final ProductService prodService;
+    private static final CategoryService categoryService;
     private static final OrderService orderService;
     private static final DiscountService discountService;
     private static final Scanner in = SingletonScanner.getInstance();
@@ -29,6 +33,7 @@ public class MenuService {
             prodService = ProductServiceImpl.getInstance();
             orderService = OrderServiceImpl.getInstance();
             discountService = DiscountServiceImpl.getInstance();
+            categoryService = CategoryServiceImpl.getInstance();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -37,7 +42,8 @@ public class MenuService {
     public static int authMenu() throws IOException {
         int choice;
         while (true) {
-            System.out.println("Enter\n1. Signup\n2. Signin\n3. Admin Login\n0. Exit");
+            System.out.println("Menu\n1. Signup\n2. Signin\n3. Admin Login\n0. Exit");
+            System.out.print("Enter: ");
             try {
                 choice = Integer.parseInt(in.nextLine());
                 break;
@@ -57,7 +63,7 @@ public class MenuService {
                     if (authService.adminLogin()) return 1;
                     return authMenu();
                 case 0:
-                    System.out.println("Thank You");
+                    System.out.println(DesignHelper.printDesign(50, '~', "Thank you for using z-kart"));
                     return -1;
                 default:
                     System.out.println("Enter Valid Option");
@@ -85,7 +91,8 @@ public class MenuService {
 
             int choice;
             do {
-                System.out.println("Menu\n1. Buy Product\n2. Order History\n3. Change Password\n4. Logout\n0. Exit");
+                System.out.println("Menu\n1. All Products\n2. Buy Product\n3. Order History");
+                System.out.println("4. Change Password\n5. Logout\n0. Exit");
                 System.out.print("Enter your choice: ");
                 try {
                     choice = Integer.parseInt(in.nextLine());
@@ -96,19 +103,22 @@ public class MenuService {
             } while (true);
             switch (choice) {
                 case 1:
-                    int res = buy();
+                    prodService.displayProducts();
                     break;
                 case 2:
-                    orderService.showAllOrder(authService.getLoggedIn());
+                    buy();
                     break;
                 case 3:
-                    authService.changePassword();
+                    orderService.showAllOrder(authService.getLoggedIn());
                     break;
                 case 4:
+                    authService.changePassword();
+                    break;
+                case 5:
                     authService.logout();
                     return -2;
                 case 0:
-                    System.out.println("Thank You for using Z-Kart");
+                    System.out.println(DesignHelper.printDesign(50, '~', "Thank you for using z-kart"));
                     return -1;
                 default:
                     System.out.println("Invalid Input");
@@ -118,6 +128,65 @@ public class MenuService {
             System.out.println(ex.getMessage());
         }
         return userMenu();
+    }
+
+    private static int adminMenu() throws IOException {
+        try {
+            int choice;
+            do {
+                System.out.println("Menu:\n1. Restock\n2. All Products\n3. Add Product");
+                System.out.println("4. Remove Product\n5. Add Category\n6. Remove Category");
+                System.out.println("9. Logout\n0. Exit");
+                System.out.print("Enter: ");
+                try {
+                    choice = Integer.parseInt(in.nextLine());
+                    break;
+                } catch (NumberFormatException ex) {
+                    System.out.println("Enter Valid Number!");
+                }
+            } while (true);
+            switch (choice) {
+                case 1:
+                    restock();
+                    break;
+                case 2:
+                    prodService.displayProducts();
+                    break;
+                case 3:
+                    prodService.addProduct();
+                    System.out.println(DesignHelper.printDesign(50, '=', "Product Added"));
+                    break;
+                case 4:
+                    prodService.removeProduct();
+                    System.out.println(DesignHelper.printDesign(50, '=', "Product Removed"));
+                    break;
+                case 5:
+                    categoryService.addCategory();
+                    System.out.println(DesignHelper.printDesign(50, '=', "Category Added"));
+                    break;
+                case 6:
+                    categoryService.removeCategory();
+                    System.out.println(DesignHelper.printDesign(50, '=', "Category Removed"));
+                    break;
+                case 7:
+                    categoryService.displayAll();
+                    break;
+                case 9:
+                    authService.logout();
+                    return -2;
+                case 0:
+                    System.out.println(DesignHelper.printDesign(50, '~', "Thank you for using z-kart"));
+                    return -1;
+                default:
+                    System.out.println("Invalid Option");
+                    return adminMenu();
+            }
+        }
+        catch (IllegalStateException ex){
+            System.out.println(DesignHelper.printDesign(50, '#', ex.getMessage()));
+            return adminMenu();
+        }
+        return 0;
     }
 
     private static int buy() throws IOException {
@@ -134,7 +203,7 @@ public class MenuService {
             boolean valid = false;
             if (coup.equalsIgnoreCase("yes")) {
                 discountService.showUserCoupon(logged, orderService.getOrderCount(logged));
-                System.out.println("Enter -1 to optOut");
+                System.out.println(DesignHelper.printDesign(50, '*', "Enter -1 to cancel"));
                 do {
                     code = InputHelper.getInput("Enter Code: ");
                     try {
@@ -144,7 +213,6 @@ public class MenuService {
                         System.out.println(ex.getMessage());
                     }
                 } while (!valid);
-                System.out.println("Valid" + valid);
                 if (!valid)
                     code = "";
             }
@@ -154,106 +222,57 @@ public class MenuService {
         return 1;
     }
 
-    private static int adminMenu() throws IOException {
-        try {
-            int choice;
+    private static int restock() throws IOException {
+        try{
+
+            System.out.println(DesignHelper.printDesign(50, '*', "Enter -1 to cancel"));
+            prodService.showLessThan(10);
+            ZProduct.Product product;
             do {
-                System.out.println("Enter:\n1. Restock\n2. Logout\n0. Exit");
                 try {
-                    choice = Integer.parseInt(in.nextLine());
+                    String prodId = InputHelper.getInput("Enter ID to restock: ");
+                    product = prodService.getProductById(prodId);
                     break;
-                } catch (NumberFormatException ex) {
-                    System.out.println("Enter Valid Number!");
+                } catch (IllegalArgumentException ex) {
+                    System.out.println(ex.getMessage());
                 }
             } while (true);
-            switch (choice) {
-                case 1:
-                    restock();
-                    break;
-                case 2:
-                    authService.logout();
-                    return -2;
-                case 0:
-                    System.out.println("Thank You for using Z-Kart");
-                    return -1;
-                default:
-                    System.out.println("Invalid Option");
-                    return adminMenu();
-            }
-        }
-        catch (IllegalStateException ex){
-            System.out.println(ex.getMessage());
-            return adminMenu();
-        }
-        return 0;
-    }
-
-    private static int restock() throws IOException {
-        System.out.println("***Enter -1 to exit at any time***");
-        prodService.showLessThan(10);
-        ZProduct.Product product;
-        do {
-            try {
-                String prodId = InputHelper.getInput("Enter ID to restock: ");
-                product = prodService.getProductById(prodId);
-                break;
-            } catch (IllegalArgumentException ex) {
-                System.out.println(ex.getMessage());
-            }
-        } while (true);
-        int additionalQuantity;
-        do{
-            additionalQuantity = Integer.parseInt(InputHelper.getInput("Enter additional Quantity: "));
-            if(additionalQuantity <= 0){
+            int additionalQuantity;
+            do{
+                additionalQuantity = Integer.parseInt(InputHelper.getInput("Enter additional Quantity: "));
+                if(additionalQuantity > 0) break;
                 System.out.println("Quantity cannot be less than 0");
-            }
-        }while (additionalQuantity > 0);
-        prodService.reOrder(product.getId(), product.getStock() + additionalQuantity);
+            }while (additionalQuantity > 0);
+            prodService.reOrder(product, product.getStock() + additionalQuantity);
+            System.out.println(DesignHelper.printDesign(50, '=',"Restocked Successfully"));
+        }
+        catch (IllegalArgumentException ex){
+            System.out.println(DesignHelper.printDesign(50, '#', ex.getMessage()));
+            return restock();
+        }
         return 1;
     }
 
     private static int buyProducts(Map<ZProduct.Product, Integer> cart) throws IOException {
-        int choice;
-        do {
-            System.out.println("Categories:\n1. Laptops\n2. Mobile\n3. Tablet\n0. Back");
-            System.out.print("Enter your choice: ");
-            try {
-                choice = Integer.parseInt(in.nextLine());
-                break;
-            } catch (NumberFormatException ex) {
-                System.out.println("Enter Valid Input");
-            }
-        } while (true);
-        ZProduct.Category category;
-        switch (choice) {
-            case 1:
-                category = ZProduct.Category.LAPTOP;
-                prodService.displayProductsByCategory(category);
-                break;
-            case 2:
-                category = ZProduct.Category.MOBILE;
-                prodService.displayProductsByCategory(category);
-                break;
-            case 3:
-                category = ZProduct.Category.TABLET;
-                prodService.displayProductsByCategory(category);
-                break;
-            case 0:
-                return 0;
-            default:
-                System.out.println("Invalid Input for Category");
-                return buyProducts(cart);
-        }
-        System.out.println("\n***Enter -1 to Exit at any point***");
-        System.out.println("***Buy Product!?***");
+        System.out.println(DesignHelper.printDesign(50, '-', "Buy Product!?"));
+        System.out.println(DesignHelper.printDesign(50, '*', "Enter -1 to cancel"));
         try {
+            categoryService.displayAll();
+            String category;
+            do {
+                category = InputHelper.getInput("Enter Category: ").trim().toUpperCase();
+                if(categoryService.alreadyExists(category)) break;
+                System.out.println("Enter Valid Category!");
+            }while (true);
+            prodService.displayProductsByCategory(category);
             String prodId = InputHelper.getInput("Enter Product Id: ").trim().toUpperCase();
             ZProduct.Product prod = prodService.existsInCategory(prodId, category);
             int quantity;
             do {
                 try {
                     quantity = Integer.parseInt(InputHelper.getInput("Enter Quantity: "));
-                    break;
+                    if(quantity > 0) break;
+                    System.out.println("Quantity Should be greater than 0");
                 } catch (NumberFormatException ex) {
                     System.out.println("Enter Valid Numerical!!");
                 }
@@ -263,9 +282,13 @@ public class MenuService {
             String conti = in.nextLine();
             if (conti.equalsIgnoreCase("yes")) return buyProducts(cart);
             return 1;
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            System.out.println(ex.getMessage());
+        } catch (IllegalArgumentException ex) {
+            System.out.println(DesignHelper.printDesign(50, '#', ex.getMessage()));
             return buyProducts(cart);
+        }
+        catch (IllegalStateException ex){
+            System.out.println(DesignHelper.printDesign(50, '#', ex.getMessage()));
+            return 0;
         }
     }
 }
