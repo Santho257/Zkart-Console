@@ -3,14 +3,23 @@ syntax = "proto3";
 option java_package = "com.santho.proto";
 option java_outer_classname = "ZUser";
 
-message User{
-    string email = 1;
-    string password = 2;
-    string name = 3;
-    string mobile = 4;
-    repeated string oldPasswords = 5;
+message BaseUser {
+  string email = 1;
+  string password = 2;
+  repeated string old_passwords = 3;
+  string name = 4;
+  string mobile = 5;
 }
 
-message ZUsers{
-    repeated User users = 1;
+message Buyer {
+  BaseUser profile = 1;
+}
+
+message ZBuyers {
+  repeated Buyer buyer = 1;
+}
+
+message Admin {
+  BaseUser profile = 1;
+  bool changePassOnLogin = 2;
 }

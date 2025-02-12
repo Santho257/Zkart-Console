@@ -3,10 +3,8 @@ package com.santho.repos;
 import com.santho.proto.ZUser;
 
 import java.io.*;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 
 public class UserRepositoryImpl implements UserRepository{
     private static UserRepositoryImpl instance;
@@ -36,22 +34,24 @@ public class UserRepositoryImpl implements UserRepository{
             }
         }
         String[] users = sb.toString().split("\n");
-        List<ZUser.User> userList = new ArrayList<>();
+        List<ZUser.Buyer> userList = new ArrayList<>();
         for (int i = 1; i < users.length; i++) {
             String[] userDet = users[i].split(" ");
-            ZUser.User tempUser = ZUser.User
+            ZUser.Buyer tempUser = ZUser.Buyer
                     .newBuilder()
-                    .setEmail(userDet[0])
-                    .setPassword(userDet[1])
-                    .addAllOldPasswords(List.of(new String[]{userDet[1]}))
-                    .setName(userDet[2])
-                    .setMobile(userDet[3])
+                    .setProfile(ZUser.BaseUser.newBuilder()
+                            .setEmail(userDet[0])
+                            .setPassword(userDet[1])
+                            .addAllOldPasswords(List.of(new String[]{userDet[1]}))
+                            .setName(userDet[2])
+                            .setMobile(userDet[3])
+                            .build())
                     .build();
             userList.add(tempUser);
         }
-        ZUser.ZUsers zuser = ZUser.ZUsers
+        ZUser.ZBuyers zuser = ZUser.ZBuyers
                 .newBuilder()
-                .addAllUsers(userList)
+                .addAllBuyer(userList)
                 .build();
         try(FileOutputStream userOS = new FileOutputStream(this.userFile)){
             zuser.writeTo(userOS);
@@ -59,30 +59,18 @@ public class UserRepositoryImpl implements UserRepository{
     }
 
     @Override
-    public List<ZUser.User> getUsers() throws IOException {
+    public List<ZUser.Buyer> getUsers() throws IOException {
         try(FileInputStream userIS = new FileInputStream(userFile)){
-            return new ArrayList<>(ZUser.ZUsers.parseFrom(userIS).getUsersList());
+            return new ArrayList<>(ZUser.ZBuyers.parseFrom(userIS).getBuyerList());
         }
     }
 
     @Override
-    public boolean alreadyExists(String email) throws IOException {
+    public ZUser.Buyer getByEmail(String email) throws IOException {
         try(FileInputStream userIS = new FileInputStream(userFile)){
-            List<ZUser.User> available = new ArrayList<>(ZUser.ZUsers.parseFrom(userIS).getUsersList());
-            for(ZUser.User usr : available){
-                if(usr.getEmail().equalsIgnoreCase(email)){
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-    @Override
-    public ZUser.User getByEmail(String email) throws IOException {
-        try(FileInputStream userIS = new FileInputStream(userFile)){
-            List<ZUser.User> available = new ArrayList<>(ZUser.ZUsers.parseFrom(userIS).getUsersList());
-            for(ZUser.User usr : available){
-                if(usr.getEmail().equalsIgnoreCase(email)){
+            List<ZUser.Buyer> available = new ArrayList<>(ZUser.ZBuyers.parseFrom(userIS).getBuyerList());
+            for(ZUser.Buyer usr : available){
+                if(usr.getProfile().getEmail().equalsIgnoreCase(email)){
                     return usr;
                 }
             }
@@ -91,10 +79,10 @@ public class UserRepositoryImpl implements UserRepository{
     }
 
     @Override
-    public void addUser(ZUser.User user) throws IOException {
+    public void addUser(ZUser.Buyer user) throws IOException {
         try(FileInputStream userIS = new FileInputStream(userFile)) {
-            ZUser.ZUsers users = ZUser.ZUsers.newBuilder()
-                    .mergeFrom(userIS).addUsers(user).build();
+            ZUser.ZBuyers users = ZUser.ZBuyers.newBuilder()
+                    .mergeFrom(userIS).addBuyer(user).build();
             try(FileOutputStream userOS = new FileOutputStream(userFile)) {
                 users.writeTo(userOS);
             }
@@ -102,29 +90,10 @@ public class UserRepositoryImpl implements UserRepository{
     }
 
     @Override
-    public void changePassword(String email, String password) throws IOException {
-        ZUser.User user = getByEmail(email);
-        List<ZUser.User> allUsers = getUsers();
-        int changeIndex = allUsers.indexOf(user);
+    public void updateUser(int index, ZUser.Buyer updated) throws IOException {
         try(FileInputStream userIS = new FileInputStream(userFile)) {
-            Queue<String> oldPasswords = new ArrayDeque<>(user.toBuilder().getOldPasswordsList());
-            for(String oldPass: oldPasswords){
-                if(password.equals(oldPass)){
-                    throw new IllegalArgumentException("Your new password cannot be equal to your last 3 passwords");
-                }
-            }
-            if(oldPasswords.size() < 3) oldPasswords.offer(password);
-            else{
-                oldPasswords.poll();
-                oldPasswords.offer(password);
-            }
-            ZUser.ZUsers users = ZUser.ZUsers.parseFrom(userIS).toBuilder()
-                    .setUsers(changeIndex, user
-                            .toBuilder()
-                            .setPassword(password)
-                            .clearOldPasswords()
-                            .addAllOldPasswords(oldPasswords)
-                            .build())
+            ZUser.ZBuyers users = ZUser.ZBuyers.parseFrom(userIS).toBuilder()
+                    .setBuyer(index, updated)
                     .build();
             try (FileOutputStream userOS = new FileOutputStream(userFile)){
                 users.writeTo(userOS);

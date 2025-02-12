@@ -27,21 +27,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public void displayWithDeal() throws IOException{
+        displayDealOfTheMoment();
+        displayProducts();
+    }
+
+    @Override
     public void displayProducts() throws IOException{
         List<ZProduct.Product> allProducts = productRepository.getProducts();
         System.out.println(DesignHelper.printDesign(50, '-', "All Products"));
-        System.out.println(DesignHelper.printDesign(50));
-        System.out.println("ID | CATEGORY | BRAND | MODEL | PRICE | STOCK");
-        System.out.println(DesignHelper.printDesign(50,'-'));
-        for(ZProduct.Product product:allProducts){
-            System.out.printf("%s | %s | %s | %s | ", product.getId(), product.getCategoryId(), product.getBrand(), product.getModel());
-            double price = product.getPrice();
-            if(product.getId().equals(productRepository.getDealOfTheMoment())){
-                price -= (price * 0.1);
-            }
-            System.out.printf("%.2f | %d\n", price, product.getStock());
-        }
-        System.out.println(DesignHelper.printDesign(50));
+        display(allProducts);
     }
 
     @Override
@@ -51,33 +46,55 @@ public class ProductServiceImpl implements ProductService {
         System.out.println(DesignHelper.printDesign(50));
         System.out.println("ID | BRAND | MODEL | PRICE | STOCK");
         System.out.println(DesignHelper.printDesign(50,'-'));
-        for(ZProduct.Product product : products){
+        for(ZProduct.Product product:products){
             System.out.printf("%s | %s | %s | ", product.getId(), product.getBrand(), product.getModel());
             double price = product.getPrice();
             if(product.getId().equals(productRepository.getDealOfTheMoment())){
                 price -= (price * 0.1);
             }
-            System.out.printf("%.2f | %d\n", price, product.getStock());
+            int stock = product.getStock();
+            System.out.printf("%.2f | %s\n", price, stock > 0 ? stock : "currently unavailable" );
         }
         System.out.println(DesignHelper.printDesign(50));
     }
 
-    @Override
-    public void showLessThan(int treshold) throws IOException {
-        List<ZProduct.Product> products = productRepository.productsLessThan(treshold);
-        if(products.size() <= 0){
-            System.out.println(DesignHelper.printDesign(50, '#', "All Stocks Above " + treshold ));
-            return;
-        }
-        System.out.println(DesignHelper.printDesign(50, '-', "All Products"));
+    private void display(List<ZProduct.Product> products){
         System.out.println(DesignHelper.printDesign(50));
         System.out.println("ID | CATEGORY | BRAND | MODEL | PRICE | STOCK");
         System.out.println(DesignHelper.printDesign(50,'-'));
         for(ZProduct.Product product:products){
             System.out.printf("%s | %s | %s | %s | ", product.getId(), product.getCategoryId(), product.getBrand(), product.getModel());
-            System.out.printf("%.2f | %d\n", product.getPrice(), product.getStock());
+            double price = product.getPrice();
+            if(product.getId().equals(productRepository.getDealOfTheMoment())){
+                price -= (price * 0.1);
+            }
+            int stock = product.getStock();
+            System.out.printf("%.2f | %s\n", price, stock > 0 ? stock : "currently unavailable" );
         }
         System.out.println(DesignHelper.printDesign(50));
+    }
+    @Override
+    public void displayDealOfTheMoment() throws IOException {
+        ZProduct.Product dealProduct = getProductById(getDealOfTheMoment());
+        System.out.println(DesignHelper.printDesign(50));
+        System.out.println(DesignHelper.printDesign(50, '*', "Deal Of the Moment"));
+        System.out.println("ID | CATEGORY | BRAND | MODEL | ACTUAL_PRICE | DISCOUNT_PRICE | STOCK");
+        System.out.printf("%s | %s | %s |", dealProduct.getId(), dealProduct.getCategoryId(), dealProduct.getBrand());
+        double price = dealProduct.getPrice();
+        double discount = price - (price * 0.1);
+        System.out.printf("%s | %.2f | %.2f | %d\n", dealProduct.getModel(), price, discount, dealProduct.getStock());
+        System.out.println(DesignHelper.printDesign(50));
+    }
+
+    @Override
+    public void showLessThan(int threshold) throws IOException {
+        List<ZProduct.Product> products = productRepository.productsLessThan(threshold);
+        if(products.isEmpty()){
+            System.out.println(DesignHelper.printDesign(50, '#', "All Stocks Above " + threshold ));
+            displayProducts();
+            return;
+        }
+        display(products);
     }
 
     @Override
@@ -99,7 +116,10 @@ public class ProductServiceImpl implements ProductService {
             do{
                 category = InputHelper.getInput("Enter Category: ");
                 if(categoryService.alreadyExists(category)) break;
-                System.out.println("Enter Valid Category!");
+                String create = InputHelper.getInput("Want to add this as new category?(yes)");
+                if(create.equalsIgnoreCase("yes")){
+                    categoryService.addCategory(category);
+                }
             }while (true);
             do{
                 brand = InputHelper.getInput("Enter Brand: ");

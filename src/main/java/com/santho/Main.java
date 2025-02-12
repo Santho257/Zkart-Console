@@ -1,12 +1,13 @@
 package com.santho;
 
+import com.santho.helpers.DesignHelper;
 import com.santho.services.MenuService;
 
 import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("***Welcome to Z-cart - Ecommerce for Gadgets***");
+        System.out.println(DesignHelper.printDesign(50,'*', "Welcome to Z-kart"));
         int result;
         try {
             result = MenuService.authMenu();

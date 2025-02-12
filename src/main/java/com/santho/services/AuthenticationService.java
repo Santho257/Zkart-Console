@@ -2,34 +2,25 @@ package com.santho.services;
 
 import com.santho.helpers.DesignHelper;
 import com.santho.helpers.InputHelper;
-import com.santho.helpers.SingletonScanner;
-import com.santho.proto.ZAdmin;
 import com.santho.proto.ZUser;
-import com.santho.repos.AdminRepository;
-import com.santho.repos.AdminRepositoryImpl;
-import com.santho.repos.UserRepository;
-import com.santho.repos.UserRepositoryImpl;
+import com.santho.services.admin.AdminService;
+import com.santho.services.admin.AdminServiceImpl;
 import com.santho.services.user.UserService;
 import com.santho.services.user.UserServiceImpl;
 
 import java.io.IOException;
-import java.util.Scanner;
-import java.util.regex.Pattern;
+import com.santho.helpers.ValidateHelper;
 
 public class AuthenticationService {
     private static AuthenticationService instance;
-    private final Scanner in;
-    private final UserRepository userRepository;
-    private final AdminRepository adminRepository;
+    private final AdminService adminService;
     private final UserService userService;
     private String loggedIn;
     private boolean admin = false;
 
     private AuthenticationService() throws IOException {
-        this.in = SingletonScanner.getInstance();
-        userRepository = UserRepositoryImpl.getInstance();
         userService = UserServiceImpl.getInstance();
-        adminRepository = AdminRepositoryImpl.getInstance();
+        adminService = AdminServiceImpl.getInstance();
     }
 
     public static AuthenticationService getInstance() throws IOException {
@@ -44,10 +35,10 @@ public class AuthenticationService {
         String email;
         do {
             email = InputHelper.getInput("Enter Email: ").toLowerCase();
-            if (validateEmail(email)) break;
+            if (ValidateHelper.validateEmail(email)) break;
             else System.out.println("Not an Valid email!!");
         } while (true);
-        if (userRepository.alreadyExists(email)) {
+        if (userService.alreadyExists(email)) {
             System.out.println(DesignHelper.printDesign(50, '#', "User Already Exist! -> Moves to Sign-in"));
             return this.login(email);
         }
@@ -58,7 +49,7 @@ public class AuthenticationService {
         String password;
         do{
             password = InputHelper.getInput("Enter Password: ");
-            if(validatePassword(password))  break;
+            if(ValidateHelper.validatePassword(password))  break;
             else System.out.println("Password should contain atleast:\n2 Captial Alphabet\n2 Small Alphabet\n2 Number");
         }while (true);
         String rePass;
@@ -71,36 +62,26 @@ public class AuthenticationService {
         String number;
         do {
             number = InputHelper.getInput("Enter Number: ");
-            if (validateMobile(number)) break;
+            if (ValidateHelper.validateMobile(number)) break;
             else System.out.println("Invalid Number:: Should be 10 numbers that starts with 6 | 7 | 8 | 9");
         } while (true);
-        userService.addUser(ZUser.User.newBuilder()
-                .setEmail(email)
-                .setOldPasswords(0, PasswordEncoderService.encode(password))
-                .setPassword(PasswordEncoderService.encode(password))
-                .setName(name)
-                .setMobile(number)
+        userService.addUser(ZUser.Buyer.newBuilder()
+                        .setProfile(ZUser.BaseUser.newBuilder()
+                                .setEmail(email)
+                                .setOldPasswords(0, PasswordEncoderService.encode(password))
+                                .setPassword(PasswordEncoderService.encode(password))
+                                .setName(name)
+                                .setMobile(number)
+                                .build())
                 .build());
         this.loggedIn = email;
         return true;
     }
 
-    private boolean validateMobile(String number) {
-        return Pattern
-                .compile("^[6789]{1}[0-9]{9}$", Pattern.CASE_INSENSITIVE)
-                .matcher(number).matches();
-    }
-
-    private boolean validateEmail(String email) {
-        return Pattern
-                .compile("^[a-z\\d]([a-z\\d]+\\.)*[a-z\\d]+@([a-z\\d]+\\.)+[a-z]{2,4}$", Pattern.CASE_INSENSITIVE)
-                .matcher(email).matches();
-    }
-
     public boolean login() throws IOException {
         System.out.println(DesignHelper.printDesign(50, '*', "Enter -1 to cancel"));
         String email = InputHelper.getInput("Enter Email: ").toLowerCase();
-        if(userRepository.alreadyExists(email))
+        if(userService.alreadyExists(email))
             return this.login(email);
         else {
             System.out.println(DesignHelper.printDesign(50, '#', "User Doesn't Exists\n Creating new account"));
@@ -110,7 +91,7 @@ public class AuthenticationService {
 
     private boolean login(String email) throws IOException {
         String password = InputHelper.getInput("Enter Password: ");
-        if (PasswordEncoderService.match(password, userRepository.getByEmail(email).getPassword())) {
+        if (PasswordEncoderService.match(password, userService.getByEmail(email).getProfile().getPassword())) {
             this.loggedIn = email;
             return true;
         }
@@ -130,25 +111,25 @@ public class AuthenticationService {
         String email;
         do{
             email = InputHelper.getInput("Enter email: ");
-            if(email.equals("admin@zoho.com"))  break;
+            if(email.equalsIgnoreCase(adminService.getAdmin().getProfile().getEmail()))  break;
             System.out.println("Invalid Admin Email!!");
         }while (true);
         do{
             String password = InputHelper.getInput("Enter Password: ");
-            ZAdmin.Admin adminDet = adminRepository.getAdmin();
-            if(PasswordEncoderService.match(password, adminDet.getPassword())){
+            ZUser.Admin adminDet = adminService.getAdmin();
+            if(PasswordEncoderService.match(password, adminDet.getProfile().getPassword())){
                 loggedIn = email;
                 admin = true;
                 if(adminDet.getChangePassOnLogin()){
                     System.out.println("You logged in with generated password! Please change your password");
                     try{
                         adminPassChange(true);
+                        adminService.changePasswordState(false);
                     }
                     catch (IllegalStateException ex){
                         System.out.println(ex.getMessage());
                         return false;
                     }
-                    adminRepository.changePasswordState(false);
                 }
                 return true;
             }
@@ -168,8 +149,8 @@ public class AuthenticationService {
         if(!firstChange){
             do{
                 String password = InputHelper.getInput("Enter Password: ");
-                ZAdmin.Admin adminDet = adminRepository.getAdmin();
-                if(PasswordEncoderService.match(password, adminDet.getPassword())){
+                ZUser.Admin adminDet = adminService.getAdmin();
+                if(PasswordEncoderService.match(password, adminDet.getProfile().getPassword())){
                     break;
                 }
                 System.out.println("Incorrect Password!");
@@ -178,7 +159,12 @@ public class AuthenticationService {
         String password;
         do{
             password = InputHelper.getInput("Enter Password: ");
-            if(validatePassword(password))  break;
+            if(ValidateHelper.validatePassword(password)) {
+                if(!adminService.isOldPassword(password))
+                    break;
+                else
+                    System.out.println("Your password shouldn't be equal to your last 3 passwords!");
+            }
             else System.out.println("Password should contain atleast:\n2 Captial Alphabet\n2 Small Alphabet\n2 Number");
         }while (true);
         String rePass;
@@ -188,7 +174,7 @@ public class AuthenticationService {
             else System.out.println("Password Doesn't match");
         } while (true);
         try {
-            adminRepository.changePassword(PasswordEncoderService.encode(password));
+            adminService.changePassword(password);
         }
         catch (IllegalArgumentException ex){
             System.out.println(ex.getMessage());
@@ -199,8 +185,8 @@ public class AuthenticationService {
     public void changePassword() throws IOException{
         do{
             String curPass = InputHelper.getInput("Current Password: ");
-            ZUser.User user = userService.getUserById(this.loggedIn);
-            if(PasswordEncoderService.match(curPass, user.getPassword())){
+            ZUser.Buyer user = userService.getUserById(this.loggedIn);
+            if(PasswordEncoderService.match(curPass, user.getProfile().getPassword())){
                 break;
             }
             System.out.println("Incorrect Password!");
@@ -208,7 +194,7 @@ public class AuthenticationService {
         String password;
         do{
             password = InputHelper.getInput("New Password: ");
-            if(validatePassword(password))  break;
+            if(ValidateHelper.validatePassword(password))  break;
             else System.out.println("Password should contain atleast:\n2 Captial Alphabets\n2 Small Alphabets\n2 Numbers\nNo space");
         }while (true);
         String rePass;
@@ -225,11 +211,5 @@ public class AuthenticationService {
             System.out.println(ex.getMessage());
             changePassword();
         }
-    }
-
-    private boolean validatePassword(String password){
-        return Pattern
-                .compile("^(?=.*\\d.*\\d)(?=.*[a-z].*[a-z])(?=.*[A-Z].*[A-Z])(?!.*[ ]).{6,}$")
-                .matcher(password).matches();
     }
 }

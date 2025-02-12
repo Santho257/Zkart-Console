@@ -1,5 +1,6 @@
 package com.santho.services.order;
 
+import com.santho.helpers.InputHelper;
 import com.santho.proto.Order;
 import com.santho.proto.ZProduct;
 import com.santho.repos.OrderRepository;
@@ -11,10 +12,7 @@ import com.santho.services.product.ProductService;
 import com.santho.services.product.ProductServiceImpl;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OrderServiceImpl implements OrderService {
     static private OrderServiceImpl instance;
@@ -45,12 +43,24 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order.OrderDetail checkout(Map<ZProduct.Product, Integer> cart, String code) throws IOException {
         for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
-            if (entry.getKey().getStock() < entry.getValue())
-                throw new IllegalStateException("Sorry!! " + entry.getKey().getId() + " doesn't has " + entry.getValue() + " Stocks");
+            ZProduct.Product product = entry.getKey();
+            String prodId = product.getId();
+            int stock = product.getStock();
+            if(stock == 0){
+                throw new IllegalStateException(prodId + " currently unavailable");
+            }
+            if (stock < entry.getValue()){
+                System.out.printf("We currently have only %d of %s\n", stock, prodId);
+                String conti = InputHelper.getInput("Do you want to continue?(yes)");
+                if(conti.equalsIgnoreCase("yes")){
+                    cart.put(product, stock);
+                }
+                else throw new IllegalStateException("Cancelling the order!");
+            }
         }
-        Date today = new Date();
+        Calendar today = Calendar.getInstance();
         String invoiceNumber = String.format("%4d/%2d/%s/%4d",
-                today.getYear(), today.getMonth(),
+                1900 + today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1,
                 authService.getLoggedIn().split("@")[0], getOrderCount(authService.getLoggedIn()) + 1);
         invoiceNumber = invoiceNumber.replaceAll(" ", "0");
         double price = 0, discountPrice = 0;
@@ -80,8 +90,8 @@ public class OrderServiceImpl implements OrderService {
                 .setPrice(price - discountPrice)
                 .setOrderBy(loggedIn)
                 .addAllProductDetails(products)
-                .setDiscount(code)
-                .setOrderAt(String.format("%2d-%2d-%4d", today.getDate() + 1, today.getMonth() + 1, 1900 + today.getYear()))
+                .setDiscount(code.toUpperCase())
+                .setOrderAt(String.format("%2d-%2d-%4d", today.get(Calendar.DATE) + 1, today.get(Calendar.MONTH) + 1, today.get(Calendar.YEAR)))
                 .build();
         for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
             productService.reOrder(entry.getKey(), entry.getKey().getStock() - entry.getValue());

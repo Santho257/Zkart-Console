@@ -103,7 +103,7 @@ public class MenuService {
             } while (true);
             switch (choice) {
                 case 1:
-                    prodService.displayProducts();
+                    prodService.displayWithDeal();
                     break;
                 case 2:
                     buy();
@@ -191,6 +191,7 @@ public class MenuService {
 
     private static int buy() throws IOException {
         Map<ZProduct.Product, Integer> cart = new HashMap<>();
+        prodService.displayDealOfTheMoment();
         int res = buyProducts(cart);
         if (res == 0) {
             return res;

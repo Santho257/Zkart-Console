@@ -25,8 +25,13 @@ public class CategoryServiceImpl implements CategoryService{
     @Override
     public void addCategory() throws IOException {
         String name = InputHelper.getInput("Enter Category name: ");
-        if(alreadyExists(name)) throw new IllegalArgumentException(name + " Already exists!!");
-        categoryRepository.addCategory(ZCategory.Category.newBuilder().setName(name.toUpperCase()).build());
+        addCategory(name);
+    }
+
+    @Override
+    public void addCategory(String category) throws IOException {
+        if(alreadyExists(category)) throw new IllegalArgumentException(category + " Already exists!!");
+        categoryRepository.addCategory(ZCategory.Category.newBuilder().setName(category.toUpperCase()).build());
     }
 
     @Override

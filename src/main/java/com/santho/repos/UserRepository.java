@@ -2,16 +2,15 @@ package com.santho.repos;
 
 import com.santho.proto.ZUser;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
 public interface UserRepository {
-    List<ZUser.User> getUsers() throws IOException;
-    boolean alreadyExists(String email) throws IOException;
-    ZUser.User getByEmail(String email) throws IOException;
+    List<ZUser.Buyer> getUsers() throws IOException;
 
-    void addUser(ZUser.User user) throws IOException;
+    ZUser.Buyer getByEmail(String email) throws IOException;
 
-    void changePassword(String email, String password) throws IOException;
+    void addUser(ZUser.Buyer user) throws IOException;
+
+    void updateUser(int index, ZUser.Buyer updated) throws IOException;
 }
