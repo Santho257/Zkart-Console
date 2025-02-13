@@ -12,7 +12,6 @@ import com.santho.services.discount.DiscountServiceImpl;
 import com.santho.services.product.ProductService;
 import com.santho.services.product.ProductServiceImpl;
 
-import java.io.IOException;
 import java.util.*;
 
 public class OrderServiceImpl implements OrderService {
@@ -67,12 +66,6 @@ public class OrderServiceImpl implements OrderService {
         }
         if(cart.isEmpty())  throw new IllegalStateException("No products left!");
         String loggedIn = authService.getLoggedIn();
-        Calendar today = Calendar.getInstance();
-        int orderCount = getOrderCount(loggedIn) + 1;
-        String invoiceNumber = String.format("%4d/%2d/%s/%4d",
-                today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1,
-                loggedIn, orderCount);
-        invoiceNumber = invoiceNumber.replaceAll(" ", "0");
         double price = 0, discountPrice = 0;
         List<Order.ProductDetail> products = new ArrayList<>();
         String dealOfTheMoment = productService.getDealOfTheMoment();
@@ -86,19 +79,33 @@ public class OrderServiceImpl implements OrderService {
             price += (product.getPrice() * quantity);
         }
         if (!code.isEmpty()) {
-            discountService.useDiscount(code);
             discountPrice += (price * (Math.random() * 10 + 20) / 100);
         }
         Order.OrderDetail newOrder = Order.OrderDetail.newBuilder()
-                .setInvoiceNumber(invoiceNumber)
                 .setSaved(discountPrice)
                 .setPrice(price - discountPrice)
                 .setOrderBy(loggedIn)
                 .addAllProductDetails(products)
                 .setDiscount(code.toUpperCase())
-                .setOrderAt(String.format("%2d-%2d-%4d", today.get(Calendar.DATE), today.get(Calendar.MONTH) + 1, today.get(Calendar.YEAR)))
                 .build();
-        Order.OrderDetail saved = orderRepository.addOrder(newOrder);
+        showOrder(newOrder);
+        String conti = InputHelper.getInput("Proceed to Buy?(yes)");
+        if(!conti.equalsIgnoreCase("yes")) {
+            throw new IllegalArgumentException("Cart emptied without buying!");
+        }
+        if (!code.isEmpty()) {
+            discountService.useDiscount(code);
+        }
+        Calendar today = Calendar.getInstance();
+        int orderCount = getOrderCount(loggedIn) + 1;
+        String invoiceNumber = String.format("%4d/%2d/%s/%4d",
+                today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1,
+                loggedIn, orderCount).replaceAll(" ", "0");
+        String date = String.format("%2d-%2d-%4d", today.get(Calendar.DATE), today.get(Calendar.MONTH) + 1, today.get(Calendar.YEAR));
+        Order.OrderDetail saved = orderRepository.addOrder(newOrder.toBuilder()
+                .setInvoiceNumber(invoiceNumber)
+                .setOrderAt(date)
+                .build());
         for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
             productService.reOrder(entry.getKey(), entry.getKey().getStock() - entry.getValue());
         }
@@ -110,11 +117,20 @@ public class OrderServiceImpl implements OrderService {
         return saved;
     }
 
+    private void showCart(Map<ZProduct.Product, Integer> cart, String code) {
+        System.out.println("ProductId | Quantity");
+        for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
+            System.out.printf("%s | %d\n", entry.getKey().getId(),entry.getValue());
+        }
+    }
+
     @Override
     public void showOrder(Order.OrderDetail order){
         System.out.println();
-        System.out.println("Invoice Number: " + order.getInvoiceNumber());
-        System.out.println("Date: " + order.getOrderAt());
+        if(!order.getInvoiceNumber().isEmpty()){
+            System.out.println("Invoice Number: " + order.getInvoiceNumber());
+            System.out.println("Date: " + order.getOrderAt());
+        }
         System.out.println(DesignHelper.printDesign(75));
         System.out.println("Category | Brand | Model | Price | Quantity");
         System.out.println(DesignHelper.printDesign(75, '-'));

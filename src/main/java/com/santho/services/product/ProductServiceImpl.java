@@ -98,7 +98,7 @@ public class ProductServiceImpl implements ProductService {
         System.out.println(DesignHelper.printDesign(75));
         System.out.println(DesignHelper.printDesign(75, '*', "Deal Of the Moment"));
         System.out.println("ID | CATEGORY | BRAND | MODEL | ACTUAL_PRICE | DISCOUNT_PRICE | STOCK");
-        System.out.printf("%s | %s | %s |", dealProduct.getId(), dealProduct.getCategoryId(), dealProduct.getBrand());
+        System.out.printf("%s | %s | %s | ", dealProduct.getId(), dealProduct.getCategoryId(), dealProduct.getBrand());
         double price = dealProduct.getPrice();
         double discount = price - (price * 0.1);
         System.out.printf("%s | %.2f | %.2f | %d\n", dealProduct.getModel(), price, discount, dealProduct.getStock());
