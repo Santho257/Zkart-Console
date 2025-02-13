@@ -3,13 +3,13 @@ package com.santho.services.discount;
 import java.io.IOException;
 
 public interface DiscountService {
-    String generateCoupon(int orderNumber) throws IOException;
+    String generateCoupon(int orderNumber);
 
-    void showUserCoupon(String email, int orderNumber) throws IOException;
+    void showUserCoupon(String email, int orderNumber);
 
-    boolean hasCoupon(String email) throws IOException;
+    boolean hasCoupon(String email);
 
-    boolean isValid(String code, int count) throws IOException;
+    boolean isValid(String code, int count);
 
-    void useDiscount(String code) throws IOException;
+    void useDiscount(String code);
 }

@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface OrderRepository {
-    List<Order.OrderDetail> getOrdersByUser(String email) throws IOException;
+    List<Order.OrderDetail> getOrdersByUser(String email);
 
-    Order.OrderDetail addOrder(Order.OrderDetail newOrder) throws IOException;
+    Order.OrderDetail addOrder(Order.OrderDetail newOrder);
 }

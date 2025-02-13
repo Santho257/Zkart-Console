@@ -1,5 +1,6 @@
 package com.santho.services.order;
 
+import com.santho.helpers.DesignHelper;
 import com.santho.helpers.InputHelper;
 import com.santho.proto.Order;
 import com.santho.proto.ZProduct;
@@ -21,14 +22,14 @@ public class OrderServiceImpl implements OrderService {
     private final ProductService productService;
     private final DiscountService discountService;
 
-    private OrderServiceImpl() throws IOException {
+    private OrderServiceImpl(){
         orderRepository = OrderRepositoryImpl.getInstance();
         authService = AuthenticationService.getInstance();
         productService = ProductServiceImpl.getInstance();
         discountService = DiscountServiceImpl.getInstance();
     }
 
-    public static OrderServiceImpl getInstance() throws IOException {
+    public static OrderServiceImpl getInstance(){
         if (instance == null) {
             instance = new OrderServiceImpl();
         }
@@ -36,32 +37,41 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public int getOrderCount(String user) throws IOException {
+    public int getOrderCount(String user){
         return orderRepository.getOrdersByUser(user).size();
     }
 
     @Override
-    public Order.OrderDetail checkout(Map<ZProduct.Product, Integer> cart, String code) throws IOException {
+    public Order.OrderDetail checkout(Map<ZProduct.Product, Integer> cart, String code){
         for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
             ZProduct.Product product = entry.getKey();
             String prodId = product.getId();
             int stock = product.getStock();
             if(stock == 0){
-                throw new IllegalStateException(prodId + " currently unavailable");
+                System.out.printf("%s currently unavailable\n", prodId);
+                String conti = InputHelper.getInput("Do you want to continue?(yes)");
+                if(conti.equalsIgnoreCase("yes")){
+                    cart.remove(product);
+                }
             }
-            if (stock < entry.getValue()){
+            else if (stock < entry.getValue()){
                 System.out.printf("We currently have only %d of %s\n", stock, prodId);
                 String conti = InputHelper.getInput("Do you want to continue?(yes)");
                 if(conti.equalsIgnoreCase("yes")){
                     cart.put(product, stock);
                 }
-                else throw new IllegalStateException("Cancelling the order!");
+                else{
+                    cart.remove(product);
+                }
             }
         }
+        if(cart.isEmpty())  throw new IllegalStateException("No products left!");
+        String loggedIn = authService.getLoggedIn();
         Calendar today = Calendar.getInstance();
+        int orderCount = getOrderCount(loggedIn) + 1;
         String invoiceNumber = String.format("%4d/%2d/%s/%4d",
-                1900 + today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1,
-                authService.getLoggedIn().split("@")[0], getOrderCount(authService.getLoggedIn()) + 1);
+                today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1,
+                loggedIn, orderCount);
         invoiceNumber = invoiceNumber.replaceAll(" ", "0");
         double price = 0, discountPrice = 0;
         List<Order.ProductDetail> products = new ArrayList<>();
@@ -75,14 +85,9 @@ public class OrderServiceImpl implements OrderService {
             if(product.getId().equals(dealOfTheMoment)) discountPrice += (product.getPrice() * 0.1 * quantity);
             price += (product.getPrice() * quantity);
         }
-        String loggedIn = authService.getLoggedIn();
         if (!code.isEmpty()) {
             discountService.useDiscount(code);
             discountPrice += (price * (Math.random() * 10 + 20) / 100);
-        }
-        if (getOrderCount(loggedIn) == 2 || price >= 20000) {
-            String discountCode = discountService.generateCoupon(getOrderCount(loggedIn));
-            System.out.println("Rewards: Discount code: " + discountCode);
         }
         Order.OrderDetail newOrder = Order.OrderDetail.newBuilder()
                 .setInvoiceNumber(invoiceNumber)
@@ -91,26 +96,39 @@ public class OrderServiceImpl implements OrderService {
                 .setOrderBy(loggedIn)
                 .addAllProductDetails(products)
                 .setDiscount(code.toUpperCase())
-                .setOrderAt(String.format("%2d-%2d-%4d", today.get(Calendar.DATE) + 1, today.get(Calendar.MONTH) + 1, today.get(Calendar.YEAR)))
+                .setOrderAt(String.format("%2d-%2d-%4d", today.get(Calendar.DATE), today.get(Calendar.MONTH) + 1, today.get(Calendar.YEAR)))
                 .build();
+        Order.OrderDetail saved = orderRepository.addOrder(newOrder);
         for (Map.Entry<ZProduct.Product, Integer> entry : cart.entrySet()) {
             productService.reOrder(entry.getKey(), entry.getKey().getStock() - entry.getValue());
         }
+        if (orderCount == 3 || price - discountPrice >= 20000) {
+            String discountCode = discountService.generateCoupon(orderCount);
+            System.out.println("Rewards: Discount code: " + discountCode);
+        }
         productService.setDeal();
-        return orderRepository.addOrder(newOrder);
+        return saved;
     }
 
     @Override
-    public void showOrder(Order.OrderDetail order) throws IOException {
+    public void showOrder(Order.OrderDetail order){
         System.out.println();
         System.out.println("Invoice Number: " + order.getInvoiceNumber());
         System.out.println("Date: " + order.getOrderAt());
-        System.out.println("Category Brand Model Price Quantity");
+        System.out.println(DesignHelper.printDesign(75));
+        System.out.println("Category | Brand | Model | Price | Quantity");
+        System.out.println(DesignHelper.printDesign(75, '-'));
         List<Order.ProductDetail> products = order.getProductDetailsList();
         for (Order.ProductDetail prod : products) {
-            ZProduct.Product product = productService.getProductById(prod.getProdId());
-            System.out.printf("%s %s %s %.2f %d%n", product.getCategoryId(), product.getBrand(), product.getModel(), product.getPrice(), prod.getQuantity());
+            try{
+                ZProduct.Product product = productService.getProductById(prod.getProdId());
+                System.out.printf("%s %s %s %.2f %d%n", product.getCategoryId(), product.getBrand(), product.getModel(), product.getPrice(), prod.getQuantity());
+            }
+            catch (IllegalArgumentException ex){
+                System.out.println(DesignHelper.printDesign(75,'#',ex.getMessage()));
+            }
         }
+        System.out.println(DesignHelper.printDesign(75));
         System.out.printf("Total: %.2f\n", order.getPrice() + order.getSaved());
         if(order.getSaved() > 0){
             if(!order.getDiscount().isEmpty())
@@ -122,7 +140,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void showAllOrder(String email) throws IOException {
+    public void showAllOrder(String email){
         List<Order.OrderDetail> allOrders = orderRepository.getOrdersByUser(email);
         if(allOrders.isEmpty()){
             System.out.println("You Haven't made any orders yet!");

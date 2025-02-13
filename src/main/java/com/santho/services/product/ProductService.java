@@ -7,27 +7,29 @@ import java.io.IOException;
 import java.util.Map;
 
 public interface ProductService {
-    void displayProductsByCategory(String category) throws IOException;
+    void displayProductsByCategory(String category);
 
-    void displayWithDeal() throws IOException;
+    void displayWithDeal();
 
-    void displayProducts() throws IOException;
+    void displayProducts();
 
-    ZProduct.Product existsInCategory(String prodId, String category) throws IOException;
+    ZProduct.Product existsInCategory(String prodId, String category);
 
-    ZProduct.Product getProductById(String prod) throws IOException;
+    ZProduct.Product getProductById(String prod);
 
-    void reOrder(ZProduct.Product product, int quantity) throws IOException;
+    void reOrder(ZProduct.Product product, int quantity);
 
-    void showLessThan(int treshold) throws IOException;
+    void showLessThan(int treshold);
 
-    void addProduct() throws IOException;
+    void addProduct();
 
     String getDealOfTheMoment();
 
-    void setDeal() throws IOException;
+    void setDeal();
 
-    void removeProduct() throws IOException;
+    void removeProduct();
 
-    void displayDealOfTheMoment() throws IOException;
+    void displayByCategoryWithCart(String category, Map<ZProduct.Product, Integer> cart);
+
+    void displayDealOfTheMoment();
 }

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option java_package = "com.santho.proto";
+option java_outer_classname = "ZLogin";
+
+message Login{
+  string loggedIn = 1;
+  bool admin = 2;
+}

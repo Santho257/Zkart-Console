@@ -7,19 +7,19 @@ import java.io.IOException;
 import java.util.List;
 
 public interface ProductRepository {
-    List<ZProduct.Product> getProducts() throws IOException;
+    List<ZProduct.Product> getProducts();
 
-    List<ZProduct.Product> getProductsByCategory(String category) throws IOException;
+    List<ZProduct.Product> getProductsByCategory(String category);
 
-    void updateStock(ZProduct.Product product, int quantity) throws IOException;
+    void updateStock(ZProduct.Product product, int quantity);
 
-    List<ZProduct.Product> productsLessThan(int treshold) throws IOException;
+    List<ZProduct.Product> productsLessThan(int treshold);
 
     String getDealOfTheMoment();
 
-    void setDealOfTheMoment() throws IOException;
+    void setDealOfTheMoment();
 
-    void addProduct(String category, String brand, String model, double price, int stock) throws IOException;
+    void addProduct(String category, String brand, String model, double price, int stock);
 
-    void removeProduct(String productId) throws IOException;
+    void removeProduct(ZProduct.Product product);
 }

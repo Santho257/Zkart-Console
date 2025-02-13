@@ -10,14 +10,20 @@ public class OrderRepositoryImpl implements OrderRepository{
     private static OrderRepositoryImpl instance;
     private final File orderFile;
 
-    private OrderRepositoryImpl() throws IOException {
+    private OrderRepositoryImpl(){
         orderFile = new File("public/db/zorders_db.protobuf");
         if(!orderFile.exists()){
-            FileOutputStream orderFos = new FileOutputStream(orderFile);
-            orderFos.close();
+            try {
+                FileOutputStream orderFos = new FileOutputStream(orderFile);
+                orderFos.close();
+            }
+            catch (IOException e) {
+                throw new IllegalStateException("Error From our side. Please try again later!");
+            }
         }
+
     }
-    public static OrderRepositoryImpl getInstance() throws IOException {
+    public static OrderRepositoryImpl getInstance(){
         if (instance == null) {
             instance = new OrderRepositoryImpl();
         }
@@ -25,17 +31,20 @@ public class OrderRepositoryImpl implements OrderRepository{
     }
 
     @Override
-    public List<Order.OrderDetail> getOrdersByUser(String email) throws IOException {
+    public List<Order.OrderDetail> getOrdersByUser(String email){
         try(FileInputStream orderIS = new FileInputStream(orderFile)){
             return Order.AllOrders.parseFrom(orderIS)
                     .getOrdersList().stream()
                     .filter(order -> order.getOrderBy().equalsIgnoreCase(email))
                     .collect(Collectors.toList());
         }
+        catch (IOException e) {
+            throw new IllegalStateException("Error fetching orders. Please try again later!");
+        }
     }
 
     @Override
-    public Order.OrderDetail addOrder(Order.OrderDetail newOrder) throws IOException {
+    public Order.OrderDetail addOrder(Order.OrderDetail newOrder){
         try(FileInputStream orderIS = new FileInputStream(orderFile)) {
             Order.AllOrders allOrders = Order.AllOrders.newBuilder()
                     .mergeFrom(orderIS).addOrders(newOrder).build();
@@ -43,6 +52,9 @@ public class OrderRepositoryImpl implements OrderRepository{
                 allOrders.writeTo(orderOS);
                 return newOrder;
             }
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Error while placing order. Please try again later!");
         }
     }
 }

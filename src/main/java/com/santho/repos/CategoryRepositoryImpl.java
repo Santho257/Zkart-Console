@@ -22,7 +22,7 @@ public class CategoryRepositoryImpl implements CategoryRepository{
     }
 
     @Override
-    public void addCategory(ZCategory.Category newCategory) throws IOException {
+    public void addCategory(ZCategory.Category newCategory){
         try(FileInputStream categoryIS = new FileInputStream(categoryFile)){
             ZCategory.AllCategories allCategories = ZCategory.AllCategories
                     .newBuilder().mergeFrom(categoryIS)
@@ -31,27 +31,36 @@ public class CategoryRepositoryImpl implements CategoryRepository{
                 allCategories.writeTo(categoryOS);
             }
         }
+        catch (IOException ex){
+            throw new IllegalStateException("Error adding category! Please try again later");
+        }
     }
 
     @Override
-    public ZCategory.Category getByName(String name) throws IOException{
+    public ZCategory.Category getByName(String name){
         try(FileInputStream cateIS = new FileInputStream(categoryFile)){
             return ZCategory.AllCategories.parseFrom(cateIS).getCategoriesList()
                     .stream().filter(cat -> cat.getName().equalsIgnoreCase(name))
                     .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Category with " + name + " not found!"));
+                    .orElseThrow(() -> new IllegalStateException("Category with " + name + " not found!"));
+        }
+        catch (IOException ex){
+            throw new IllegalStateException("Error fetching category! Please try again later");
         }
     }
 
     @Override
-    public List<ZCategory.Category> getAll() throws IOException{
+    public List<ZCategory.Category> getAll(){
         try(FileInputStream cateIS = new FileInputStream(categoryFile)){
             return ZCategory.AllCategories.parseFrom(cateIS).getCategoriesList();
         }
+        catch (IOException ex){
+            throw new IllegalStateException("Error fetching category! Please try again later");
+        }
     }
 
     @Override
-    public void removeCategory(ZCategory.Category category) throws IOException {
+    public void removeCategory(ZCategory.Category category){
         try(FileInputStream categoryIS = new FileInputStream(categoryFile)){
             ZCategory.AllCategories allCategories = ZCategory.AllCategories.parseFrom(categoryIS);
             List<ZCategory.Category> catList = allCategories.getCategoriesList();
@@ -60,6 +69,9 @@ public class CategoryRepositoryImpl implements CategoryRepository{
             try (FileOutputStream categoryOS = new FileOutputStream(categoryFile)){
                 updated.writeTo(categoryOS);
             }
+        }
+        catch (IOException ex){
+            throw new IllegalStateException("Error removing category! Please try again later");
         }
     }
 }

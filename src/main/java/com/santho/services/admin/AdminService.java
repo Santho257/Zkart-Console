@@ -2,14 +2,12 @@ package com.santho.services.admin;
 
 import com.santho.proto.ZUser;
 
-import java.io.IOException;
-
 public interface AdminService {
-    void changePassword(String newPassword) throws IOException;
+    void changePassword(String newPassword);
 
-    ZUser.Admin getAdmin() throws IOException;
+    ZUser.Admin getAdmin();
 
-    void changePasswordState(boolean change) throws IOException;
+    void changePasswordState(boolean change);
 
-    boolean isOldPassword(String password) throws IOException;
+    boolean isOldPassword(String password);
 }

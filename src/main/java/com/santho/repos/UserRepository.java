@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.util.List;
 
 public interface UserRepository {
-    List<ZUser.Buyer> getUsers() throws IOException;
+    List<ZUser.Buyer> getUsers();
 
-    ZUser.Buyer getByEmail(String email) throws IOException;
+    ZUser.Buyer getByEmail(String email);
 
-    void addUser(ZUser.Buyer user) throws IOException;
+    void addUser(ZUser.Buyer user);
 
-    void updateUser(int index, ZUser.Buyer updated) throws IOException;
+    void updateUser(int index, ZUser.Buyer updated);
 }

@@ -18,7 +18,7 @@ public class ProductRepositoryImpl implements ProductRepository{
     private final File categoryFile;
     private String dealOfTheMoment;
 
-    private ProductRepositoryImpl() throws IOException {
+    private ProductRepositoryImpl(){
         this.productFile = new File("public/db/zproducts_db.protobuf");
         this.categoryFile = new File("public/db/zcategories_db.protobuf");
         if(!this.productFile.exists()){
@@ -30,7 +30,7 @@ public class ProductRepositoryImpl implements ProductRepository{
         dealOfTheMoment = findDeal();
     }
 
-    private String findDeal() throws IOException {
+    private String findDeal(){
         try(FileInputStream discountIS = new FileInputStream(productFile)){
             ZProduct.Product dealProd = ZProduct.AllProducts.parseFrom(discountIS).getProductsList()
                     .stream()
@@ -38,9 +38,12 @@ public class ProductRepositoryImpl implements ProductRepository{
                     .orElseThrow(() -> new IllegalStateException("No product for deal available"));
             return dealProd.getId();
         }
+        catch (IOException e) {
+            throw new IllegalStateException("Error Fetching deal. Please try again later!");
+        }
     }
 
-    public static ProductRepositoryImpl getInstance() throws IOException {
+    public static ProductRepositoryImpl getInstance(){
         if (instance == null) {
             instance = new ProductRepositoryImpl();
         }
@@ -48,24 +51,30 @@ public class ProductRepositoryImpl implements ProductRepository{
     }
 
     @Override
-    public List<ZProduct.Product> getProducts() throws IOException {
+    public List<ZProduct.Product> getProducts(){
         try(FileInputStream prodIs = new FileInputStream(productFile)){
             return new ArrayList<>(ZProduct.AllProducts.parseFrom(prodIs).getProductsList());
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Error Fetching products. Please try again later!");
         }
     }
 
     @Override
-    public List<ZProduct.Product> getProductsByCategory(String category) throws IOException {
+    public List<ZProduct.Product> getProductsByCategory(String category){
         try(FileInputStream prodIS = new FileInputStream(productFile)){
             return ZProduct.AllProducts.parseFrom(prodIS)
                     .getProductsList().stream()
                     .filter(product -> product.getCategoryId().equals(category))
                     .collect(Collectors.toList());
         }
+        catch (IOException e) {
+            throw new IllegalStateException("Error fetching products. Please try again later!");
+        }
     }
 
     @Override
-    public void updateStock(ZProduct.Product product, int quantity) throws IOException {
+    public void updateStock(ZProduct.Product product, int quantity){
         try(FileInputStream prodIS = new FileInputStream(productFile)){
             List<ZProduct.Product> productList = getProducts();
             int updateIndex = productList.indexOf(product);
@@ -75,24 +84,33 @@ public class ProductRepositoryImpl implements ProductRepository{
                 allProducts.writeTo(prodOS);
             }
         }
+        catch (IOException e) {
+            throw new IllegalStateException("Error updating products. Please try again later!");
+        }
     }
 
     @Override
-    public List<ZProduct.Product> productsLessThan(int treshold) throws IOException{
+    public List<ZProduct.Product> productsLessThan(int treshold){
         try (FileInputStream prodIS = new FileInputStream(productFile)){
             return ZProduct.AllProducts.parseFrom(prodIS)
                     .getProductsList().stream()
                     .filter(prod -> prod.getStock() < treshold)
                     .collect(Collectors.toList());
         }
+        catch (IOException e) {
+            throw new IllegalStateException("Error fetching products. Please try again later!");
+        }
     }
 
-    private void readFromInitial() throws IOException {
+    private void readFromInitial(){
         StringBuilder sb = new StringBuilder();
         Set<ZCategory.Category> cates = new HashSet<>();
         try(FileInputStream prodIS = new FileInputStream("src/main/resources/z-kart_db.txt")){
             int ch;
             while((ch = prodIS.read())!=-1) sb.append((char) ch);
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Error From our side. Please try again later!");
         }
         String[] prodArr = sb.toString().split("\n");
         List<ZProduct.Product> productList = new ArrayList<>();
@@ -117,8 +135,14 @@ public class ProductRepositoryImpl implements ProductRepository{
         try(FileOutputStream prodOS = new FileOutputStream(this.productFile)){
             prods.writeTo(prodOS);
         }
+        catch (IOException e) {
+            throw new IllegalStateException("Error From our side. Please try again later!");
+        }
         try(FileOutputStream categoryOS = new FileOutputStream(this.categoryFile)){
             categories.writeTo(categoryOS);
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Error From our side. Please try again later!");
         }
     }
 
@@ -128,12 +152,12 @@ public class ProductRepositoryImpl implements ProductRepository{
     }
 
     @Override
-    public void setDealOfTheMoment() throws IOException {
+    public void setDealOfTheMoment(){
         this.dealOfTheMoment = findDeal();
     }
 
     @Override
-    public void addProduct(String category, String brand, String model, double price, int stock) throws IOException{
+    public void addProduct(String category, String brand, String model, double price, int stock){
         try(FileInputStream prodIS = new FileInputStream(productFile)) {
             String id = count + brand.substring(0,3).toUpperCase() + model.substring(0,3).toUpperCase();
             ZProduct.Product newProd = ZProduct.Product.newBuilder()
@@ -148,24 +172,27 @@ public class ProductRepositoryImpl implements ProductRepository{
                     .mergeFrom(prodIS).addProducts(newProd).build();
             try(FileOutputStream userOS = new FileOutputStream(productFile)) {
                 products.writeTo(userOS);
+                count++;
             }
         }
-        count++;
+        catch (IOException e) {
+            throw new IllegalStateException("Error adding product. Please try again later!");
+        }
     }
 
     @Override
-    public void removeProduct(String productId) throws IOException {
+    public void removeProduct(ZProduct.Product product){
         try(FileInputStream productIS = new FileInputStream(productFile)){
             ZProduct.AllProducts allProducts = ZProduct.AllProducts.parseFrom(productIS);
             List<ZProduct.Product> prodList = allProducts.getProductsList();
-            ZProduct.Product product = prodList.stream().filter(prod -> prod.getId().equals(productId))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Product Not found"));
             int remIndex = prodList.indexOf(product);
             ZProduct.AllProducts updated = allProducts.toBuilder().removeProducts(remIndex).build();
             try (FileOutputStream categoryOS = new FileOutputStream(productFile)){
                 updated.writeTo(categoryOS);
             }
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Error removing product. Please try again later!");
         }
     }
 }

@@ -6,16 +6,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.List;
-import java.util.Queue;
 
 public class AdminRepositoryImpl implements AdminRepository {
     private static AdminRepositoryImpl instance;
     private final File adminFile;
 
-    private AdminRepositoryImpl() throws IOException {
-        this.adminFile = new File("public/db/ZUser_db.protobuf");
+    private AdminRepositoryImpl(){
+        this.adminFile = new File("public/db/zadmin_db.protobuf");
         if (!adminFile.exists()) {
             try (FileOutputStream adminOS = new FileOutputStream(adminFile)) {
                 ZUser.Admin admin = ZUser.Admin.newBuilder()
@@ -28,10 +26,13 @@ public class AdminRepositoryImpl implements AdminRepository {
                         .build();
                 admin.writeTo(adminOS);
             }
+            catch (IOException ex){
+                throw new IllegalStateException("Error in our end. Please try again later!");
+            }
         }
     }
 
-    public static AdminRepositoryImpl getInstance() throws IOException {
+    public static AdminRepositoryImpl getInstance(){
         if (instance == null) {
             instance = new AdminRepositoryImpl();
         }
@@ -39,16 +40,22 @@ public class AdminRepositoryImpl implements AdminRepository {
     }
 
     @Override
-    public ZUser.Admin getAdmin() throws IOException {
+    public ZUser.Admin getAdmin(){
         try (FileInputStream adminIS = new FileInputStream(adminFile)) {
             return ZUser.Admin.parseFrom(adminIS);
+        }
+        catch (IOException ex){
+            throw new IllegalStateException("Error while fetching data. Please try again later!");
         }
     }
 
     @Override
-    public void update(ZUser.Admin updated) throws IOException {
+    public void update(ZUser.Admin updated){
         try (FileOutputStream adminOS = new FileOutputStream(adminFile)) {
             updated.writeTo(adminOS);
+        }
+        catch (IOException ex){
+            throw new IllegalStateException("Error while updating. Please try again later!");
         }
     }
 }

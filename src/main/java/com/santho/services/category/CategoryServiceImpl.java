@@ -23,19 +23,19 @@ public class CategoryServiceImpl implements CategoryService{
     }
 
     @Override
-    public void addCategory() throws IOException {
+    public void addCategory(){
         String name = InputHelper.getInput("Enter Category name: ");
         addCategory(name);
     }
 
     @Override
-    public void addCategory(String category) throws IOException {
+    public void addCategory(String category){
         if(alreadyExists(category)) throw new IllegalArgumentException(category + " Already exists!!");
         categoryRepository.addCategory(ZCategory.Category.newBuilder().setName(category.toUpperCase()).build());
     }
 
     @Override
-    public boolean alreadyExists(String name) throws IOException {
+    public boolean alreadyExists(String name){
         List<ZCategory.Category> allCategories = categoryRepository.getAll();
         for(ZCategory.Category cat : allCategories){
             if(cat.getName().equalsIgnoreCase(name)){
@@ -46,18 +46,18 @@ public class CategoryServiceImpl implements CategoryService{
     }
 
     @Override
-    public void displayAll() throws IOException {
+    public void displayAll(){
         List<ZCategory.Category> allCategories = categoryRepository.getAll();
-        System.out.println(DesignHelper.printDesign(50, '-', "All Categories"));
-        System.out.println(DesignHelper.printDesign(50));
+        System.out.println(DesignHelper.printDesign(75, '-', "All Categories"));
+        System.out.println(DesignHelper.printDesign(75));
         for(ZCategory.Category cat : allCategories){
             System.out.println(cat.getName());
         }
-        System.out.println(DesignHelper.printDesign(50));
+        System.out.println(DesignHelper.printDesign(75));
     }
 
     @Override
-    public void removeCategory() throws IOException{
+    public void removeCategory(){
         displayAll();
         String name = InputHelper.getInput("Enter Category Name: ");
         ZCategory.Category deletedCat = categoryRepository.getByName(name);

@@ -7,11 +7,11 @@ import java.io.IOException;
 import java.util.Map;
 
 public interface OrderService {
-    int getOrderCount(String user) throws IOException;
+    int getOrderCount(String user);
 
-    Order.OrderDetail checkout(Map<ZProduct.Product, Integer> cart, String code) throws IOException;
+    Order.OrderDetail checkout(Map<ZProduct.Product, Integer> cart, String code);
 
-    void showOrder(Order.OrderDetail thisOrder) throws IOException;
+    void showOrder(Order.OrderDetail thisOrder);
 
-    void showAllOrder(String email) throws IOException;
+    void showAllOrder(String email);
 }

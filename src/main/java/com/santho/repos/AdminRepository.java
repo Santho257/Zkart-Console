@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public interface AdminRepository {
 
-    ZUser.Admin getAdmin() throws IOException;
+    ZUser.Admin getAdmin();
 
-    void update(ZUser.Admin updated) throws IOException;
+    void update(ZUser.Admin updated);
 }

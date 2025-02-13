@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.util.List;
 
 public interface DiscountRepository {
-    void addDiscount(ZDiscount.Discount discount) throws IOException;
+    void addDiscount(ZDiscount.Discount discount);
 
-    List<ZDiscount.Discount> getByUserId(String email) throws IOException;
+    List<ZDiscount.Discount> getByUserId(String email);
 
-    void useCode(String code) throws IOException;
+    void useCode(String code);
 
-    boolean isValid(String code, int orderCount) throws IOException;
+    boolean isValid(String code, int orderCount);
 }

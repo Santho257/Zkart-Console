@@ -3,13 +3,13 @@ package com.santho.services.category;
 import java.io.IOException;
 
 public interface CategoryService {
-    void addCategory() throws IOException;
+    void addCategory();
 
-    boolean alreadyExists(String name) throws IOException;
+    boolean alreadyExists(String name);
 
-    void displayAll() throws IOException;
+    void displayAll();
 
-    void removeCategory() throws IOException;
+    void removeCategory();
 
-    void addCategory(String category) throws IOException;
+    void addCategory(String category);
 }
